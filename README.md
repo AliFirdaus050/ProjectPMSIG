@@ -23,6 +23,8 @@ React, Puppeteer (PDF generation).
 - Edit ringan Site/Location dari hasil lookup (kalau data aset sudah usang)
 
 ## Struktur Project
+
+```
 pm-checklist-app/
 ├── backend/
 │   ├── src/
@@ -48,20 +50,21 @@ pm-checklist-app/
 │   ├── storage/checklists/            # PDF hasil generate (gitignored)
 │   └── package.json
 └── frontend/
-├── src/
-│   ├── api/client.js              # fetch wrapper + auth header
-│   ├── context/
-│   │   ├── AuthContext.jsx
-│   │   └── ThemeContext.jsx
-│   ├── components/AppLayout.jsx   # header nav + toggle dark mode
-│   ├── pages/
-│   │   ├── LoginPage.jsx
-│   │   ├── SerialLookupPage.jsx   # lookup + registrasi aset baru
-│   │   ├── ChecklistFormPage.jsx  # form dinamis per kategori
-│   │   ├── ChecklistPreviewPage.jsx
-│   │   └── HistoryPage.jsx
-│   └── App.jsx
-└── package.json
+    ├── src/
+    │   ├── api/client.js              # fetch wrapper + auth header
+    │   ├── context/
+    │   │   ├── AuthContext.jsx
+    │   │   └── ThemeContext.jsx
+    │   ├── components/AppLayout.jsx   # header nav + toggle dark mode
+    │   ├── pages/
+    │   │   ├── LoginPage.jsx
+    │   │   ├── SerialLookupPage.jsx   # lookup + registrasi aset baru
+    │   │   ├── ChecklistFormPage.jsx  # form dinamis per kategori
+    │   │   ├── ChecklistPreviewPage.jsx
+    │   │   └── HistoryPage.jsx
+    │   └── App.jsx
+    └── package.json
+```
 
 ## Setup Backend
 
