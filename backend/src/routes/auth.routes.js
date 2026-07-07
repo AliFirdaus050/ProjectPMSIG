@@ -1,0 +1,79 @@
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
+const { authenticate } = require('../middleware/auth');
+
+const router = express.Router();
+
+// POST /api/v1/auth/login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email dan password wajib diisi.' });
+  }
+
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.trim().toLowerCase()]);
+    const user = result.rows[0];
+
+    // Pesan error sengaja digeneralisasi (tidak bilang "email tidak ditemukan" vs
+    // "password salah" secara terpisah) supaya tidak bocorin info akun mana yang terdaftar.
+    if (!user) {
+      return res.status(401).json({ message: 'Email atau password salah.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Email atau password salah.' });
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
+});
+
+// POST /api/v1/auth/logout
+// JWT bersifat stateless, jadi logout sepenuhnya jadi tanggung jawab client
+// (hapus token dari storage). Endpoint ini disediakan supaya frontend punya
+// tempat konsisten untuk memicu proses logout & bisa dikembangkan (misal token
+// blacklist) kalau nanti dibutuhkan.
+router.post('/logout', authenticate, (req, res) => {
+  res.json({ message: 'Logout berhasil. Hapus token di sisi client.' });
+});
+
+// GET /api/v1/auth/me
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, full_name, email, role, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User tidak ditemukan.' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get me error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
+});
+
+module.exports = router;

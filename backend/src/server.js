@@ -1,0 +1,34 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const pool = require('./config/db');
+const authRoutes = require('./routes/auth.routes');
+const assetsRoutes = require('./routes/assets.routes');
+const checklistsRoutes = require('./routes/checklists.routes');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/api/v1/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW() as server_time');
+    res.json({ status: 'ok', database: 'connected', server_time: result.rows[0].server_time });
+  } catch (err) {
+    console.error('Health check gagal:', err.message);
+    res.status(500).json({ status: 'error', database: 'disconnected', message: err.message });
+  }
+});
+
+const path = require('path');
+app.use('/files', express.static(path.join(__dirname, '../storage')));
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/assets', assetsRoutes);
+app.use('/api/v1/checklists', checklistsRoutes);
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Backend jalan di http://localhost:${PORT}`);
+  console.log(`Cek koneksi DB di http://localhost:${PORT}/api/v1/health`);
+});
