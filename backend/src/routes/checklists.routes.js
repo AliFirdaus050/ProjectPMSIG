@@ -90,6 +90,8 @@ router.patch('/:id', async (req, res) => {
     technician_notes,
   } = req.body;
 
+  const normalizedConsumableType = consumable_type === '' ? null : consumable_type;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -118,7 +120,7 @@ router.patch('/:id', async (req, res) => {
            updated_at = now()
        WHERE id = $11`,
       [
-        hostname_note, ip_address, mac_address, firmware_series, consumable_type,
+        hostname_note, ip_address, mac_address, firmware_series, normalizedConsumableType,
         ink_black, ink_cyan, ink_magenta, ink_yellow, technician_notes, id,
       ]
     );
