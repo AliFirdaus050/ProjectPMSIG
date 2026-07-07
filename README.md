@@ -1,3 +1,4 @@
+HEAD
 # PM Checklist App — IT Site Operation SIG
 
 Aplikasi otomasi Preventive Maintenance (PM) checklist untuk 3 kategori device:
@@ -144,3 +145,6 @@ Tidak perlu ubah skema tabel `assets` — field checklist yang beda-beda ditampu
 - Multi-user testing menyeluruh (2+ akun teknisi berbeda, memastikan riwayat terpisah dengan benar)
 - Edge case Bagian 11 PRD belum ditest eksplisit untuk kategori Printer/Switch (duplikat serial number, dsb — kemungkinan besar sudah otomatis ke-cover karena logic-nya generic, tapi belum diverifikasi manual)
 - Approval workflow, notifikasi jadwal PM berikutnya, dan integrasi CMDB — sesuai Non-Goals PRD, di luar cakupan versi ini
+
+# ProjectPMSIG
+6a9b33d159d052a156b0ea79ff5e5ebc0268c931
