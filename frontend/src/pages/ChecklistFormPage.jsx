@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import SignaturePad from '../components/SignaturePad';
 
 export default function ChecklistFormPage() {
   const { id } = useParams();
@@ -23,7 +24,11 @@ export default function ChecklistFormPage() {
   const [inkCyan, setInkCyan] = useState('');
   const [inkMagenta, setInkMagenta] = useState('');
   const [inkYellow, setInkYellow] = useState('');
+
   const [technicianNotes, setTechnicianNotes] = useState('');
+  const [technicianSignature, setTechnicianSignature] = useState('');
+  const [picSignature, setPicSignature] = useState('');
+  const [picName, setPicName] = useState('');
 
   const [lastSaved, setLastSaved] = useState(null);
   const [error, setError] = useState('');
@@ -48,7 +53,11 @@ export default function ChecklistFormPage() {
       setInkCyan(checklistData.ink_cyan || '');
       setInkMagenta(checklistData.ink_magenta || '');
       setInkYellow(checklistData.ink_yellow || '');
+
       setTechnicianNotes(checklistData.technician_notes || '');
+      setTechnicianSignature(checklistData.technician_signature || '');
+      setPicSignature(checklistData.pic_signature || '');
+      setPicName(checklistData.pic_name || '');
 
       const existingDevice = new Map(checklistData.device_items.map((d) => [d.item_name, d]));
       const bySection = {};
@@ -107,6 +116,9 @@ export default function ChecklistFormPage() {
         ink_magenta: config?.hasInkStock ? inkMagenta : undefined,
         ink_yellow: config?.hasInkStock ? inkYellow : undefined,
         technician_notes: config?.hasTechnicianNotes ? technicianNotes : undefined,
+        technician_signature: technicianSignature || undefined,
+        pic_name: config?.hasPic ? (picName || undefined) : undefined,
+        pic_signature: config?.hasPic ? (picSignature || undefined) : undefined,
       });
       setLastSaved(new Date());
     } catch (err) {
@@ -119,7 +131,7 @@ export default function ChecklistFormPage() {
     function handleOnline() { doSave(); }
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [deviceItemsBySection, softwareItems, additionalSoftware, hostnameNote, ipAddress, macAddress, firmwareSeries, consumableType, inkBlack, inkCyan, inkMagenta, inkYellow, technicianNotes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deviceItemsBySection, softwareItems, additionalSoftware, hostnameNote, ipAddress, macAddress, firmwareSeries, consumableType, inkBlack, inkCyan, inkMagenta, inkYellow, technicianNotes, technicianSignature, picSignature, picName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function updateDeviceCondition(sectionKey, index, condition) {
     setDeviceItemsBySection((prev) => {
@@ -153,6 +165,16 @@ export default function ChecklistFormPage() {
     scheduleSave();
   }
 
+  function handleTechnicianSignatureChange(dataUrl) {
+    setTechnicianSignature(dataUrl);
+    scheduleSave();
+  }
+
+  function handlePicSignatureChange(dataUrl) {
+    setPicSignature(dataUrl);
+    scheduleSave();
+  }
+
   async function handleGeneratePdf() {
     setError('');
     setGenerating(true);
@@ -170,6 +192,9 @@ export default function ChecklistFormPage() {
   const allDeviceItemsFilled = Object.values(deviceItemsBySection).every((items) =>
     items.every((d) => d.condition)
   );
+
+  const signaturesComplete =
+    !!technicianSignature && (!config.hasPic || (!!picSignature && picName.trim() !== ''));
 
   if (!checklist || !config) return <div className="p-8 text-gray-500 dark:text-gray-400 text-sm">Memuat...</div>;
 
@@ -355,9 +380,37 @@ export default function ChecklistFormPage() {
             </div>
           </div>
 
+          <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-5">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Tanda Tangan</h2>
+            <div className="space-y-4">
+              <SignaturePad
+                label="Tanda Tangan Teknisi"
+                value={technicianSignature}
+                onChange={handleTechnicianSignatureChange}
+              />
+              {config.hasPic && (
+                <>
+                  <div>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nama PIC</label>
+                    <input
+                      value={picName}
+                      onChange={(e) => { setPicName(e.target.value); scheduleSave(); }}
+                      className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <SignaturePad
+                    label="Tanda Tangan PIC"
+                    value={picSignature}
+                    onChange={handlePicSignatureChange}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
           <button
             onClick={handleGeneratePdf}
-            disabled={!allDeviceItemsFilled || generating}
+            disabled={!allDeviceItemsFilled || !signaturesComplete || generating}
             className="w-full bg-primary hover:bg-primary-dark text-white rounded py-3 text-sm font-medium disabled:opacity-50"
           >
             {generating ? 'Memproses...' : 'Generate PDF'}
@@ -365,6 +418,13 @@ export default function ChecklistFormPage() {
           {!allDeviceItemsFilled && (
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
               Isi semua item Check Device Functions (Normal/Error) dulu untuk mengaktifkan tombol ini.
+            </p>
+          )}
+          {allDeviceItemsFilled && !signaturesComplete && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              {config.hasPic
+                ? 'Lengkapi tanda tangan Teknisi dan PIC (beserta nama PIC) dulu.'
+                : 'Lengkapi tanda tangan Teknisi dulu.'}
             </p>
           )}
         </div>

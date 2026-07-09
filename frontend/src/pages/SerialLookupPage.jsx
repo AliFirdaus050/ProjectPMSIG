@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import BarcodeScanner from '../components/BarcodeScanner';
 
 const EMPTY_NEW_ASSET = {
   asset_name: '',
@@ -14,6 +15,7 @@ const EMPTY_NEW_ASSET = {
 
 export default function SerialLookupPage() {
   const [serialNumber, setSerialNumber] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [matches, setMatches] = useState(null);
@@ -21,23 +23,17 @@ export default function SerialLookupPage() {
   const [newAsset, setNewAsset] = useState(EMPTY_NEW_ASSET);
   const [savingAsset, setSavingAsset] = useState(false);
 
-  // Edge Case 6: aset pindah lokasi tapi belum update di database.
-  // editingId menyimpan asset.id yang sedang diedit, editForm menyimpan nilai sementara.
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ site: '', detail_location: '' });
-  const [savingEdit, setSavingEdit] = useState(false);
-
   const navigate = useNavigate();
 
-  async function handleSearch(e) {
-    e.preventDefault();
+  async function handleSearch(e, overrideSerial) {
+    if (e && e.preventDefault) e.preventDefault();
+    const serialToSearch = overrideSerial || serialNumber;
     setError('');
     setMatches(null);
     setNotFound(false);
-    setEditingId(null);
     setSearching(true);
     try {
-      const result = await api.get(`/assets/search?serial_number=${encodeURIComponent(serialNumber)}`);
+      const result = await api.get(`/assets/search?serial_number=${encodeURIComponent(serialToSearch)}`);
       if (result.found) {
         setMatches(result.data);
       } else {
@@ -49,6 +45,12 @@ export default function SerialLookupPage() {
     } finally {
       setSearching(false);
     }
+  }
+
+  function handleScanResult(scannedText) {
+    setShowScanner(false);
+    setSerialNumber(scannedText);
+    handleSearch(null, scannedText);
   }
 
   async function startChecklist(assetId) {
@@ -78,32 +80,6 @@ export default function SerialLookupPage() {
     }
   }
 
-  function startEdit(asset) {
-    setEditingId(asset.id);
-    setEditForm({ site: asset.site, detail_location: asset.detail_location || '' });
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-  }
-
-  async function saveEdit(assetId) {
-    setError('');
-    setSavingEdit(true);
-    try {
-      const updated = await api.patch(`/assets/${assetId}`, {
-        site: editForm.site,
-        detail_location: editForm.detail_location,
-      });
-      setMatches((prev) => prev.map((a) => (a.id === assetId ? { ...a, ...updated } : a)));
-      setEditingId(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSavingEdit(false);
-    }
-  }
-
   return (
     <div className="py-10 px-4">
       <div className="max-w-md mx-auto">
@@ -127,7 +103,18 @@ export default function SerialLookupPage() {
               {searching ? '...' : 'Cari'}
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            className="mt-2 w-full border border-primary text-primary dark:border-blue-300 dark:text-blue-300 rounded py-2 text-sm font-medium"
+          >
+            📷 Scan Barcode
+          </button>
         </form>
+
+        {showScanner && (
+          <BarcodeScanner onScan={handleScanResult} onClose={() => setShowScanner(false)} />
+        )}
 
         {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
 
@@ -143,59 +130,15 @@ export default function SerialLookupPage() {
                 <p className="text-gray-900 dark:text-gray-100"><strong>{asset.asset_name}</strong> — {asset.model}</p>
                 <p className="text-gray-500 dark:text-gray-400">Asset Tag: {asset.asset_tag}</p>
 
-                {editingId === asset.id ? (
-                  <div className="mt-2 space-y-2">
-                    <div>
-                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Site</label>
-                      <input
-                        value={editForm.site}
-                        onChange={(e) => setEditForm({ ...editForm, site: e.target.value })}
-                        className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 rounded px-2 py-1 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Detail Location</label>
-                      <input
-                        value={editForm.detail_location}
-                        onChange={(e) => setEditForm({ ...editForm, detail_location: e.target.value })}
-                        className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 rounded px-2 py-1 text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => saveEdit(asset.id)}
-                        disabled={savingEdit}
-                        className="bg-primary hover:bg-primary-dark text-white rounded px-3 py-1.5 text-xs disabled:opacity-50"
-                      >
-                        {savingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        className="bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-200 rounded px-3 py-1.5 text-xs"
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Site: {asset.site} — {asset.detail_location}{' '}
-                      <button
-                        onClick={() => startEdit(asset)}
-                        className="text-primary dark:text-blue-300 underline text-xs ml-1"
-                      >
-                        (data sudah usang? edit)
-                      </button>
-                    </p>
-                    <button
-                      onClick={() => startChecklist(asset.id)}
-                      className="mt-2 bg-primary hover:bg-primary-dark text-white rounded px-3 py-1.5 text-sm"
-                    >
-                      Lanjut ke Checklist
-                    </button>
-                  </>
-                )}
+                <p className="text-gray-500 dark:text-gray-400">
+                  Site: {asset.site} — {asset.detail_location}
+                </p>
+                <button
+                  onClick={() => startChecklist(asset.id)}
+                  className="mt-2 bg-primary hover:bg-primary-dark text-white rounded px-3 py-1.5 text-sm"
+                >
+                  Lanjut ke Checklist
+                </button>
               </div>
             ))}
           </div>

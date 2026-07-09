@@ -1,6 +1,7 @@
 // Wrapper fetch sederhana: otomatis nempelin Authorization header
 // dan handle error message dari backend.
 const API_BASE = 'http://localhost:4000/api/v1';
+// const API_BASE = 'http://10.6.169.107:4000/api/v1';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('pm_token');
@@ -20,4 +21,5 @@ export const api = {
   get: (path) => request(path),
   post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
   patch: (path, body) => request(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  delete: (path) => request(path, { method: 'DELETE' }),
 };

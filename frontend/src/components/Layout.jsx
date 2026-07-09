@@ -18,8 +18,25 @@ export default function Layout({ children }) {
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <span className="font-semibold">PM Checklist</span>
-            <Link to="/" className="text-sm text-gray-200 hover:text-white">Checklist Baru</Link>
-            <Link to="/history" className="text-sm text-gray-200 hover:text-white">Riwayat</Link>
+                <Link to="/" className="text-sm text-gray-200 hover:text-white">Home</Link>
+            {(user?.role === 'teknisi' || user?.role === 'admin') && (
+                <Link to="/checklist-baru" className="text-sm text-gray-200 hover:text-white">PM</Link>
+            )}
+            {(user?.role === 'teknisi' || user?.role === 'admin') && (
+                <Link to="/upload-jadwal" className="text-sm text-gray-200 hover:text-white">Schedule</Link>
+            )}
+            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'pic' || user?.role === 'admin') && (
+                <Link to="/tracker" className="text-sm text-gray-200 hover:text-white">Tracker</Link>
+            )}
+            {(user?.role === 'teknisi' || user?.role === 'admin') && (
+                <Link to="/history" className="text-sm text-gray-200 hover:text-white">History</Link>
+            )}
+            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'admin') && (
+                <Link to="/devices" className="text-sm text-gray-200 hover:text-white">Database</Link>
+            )}
+            {user?.role === 'admin' && (
+                <Link to="/users" className="text-sm text-gray-200 hover:text-white">Manage User</Link>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <button onClick={toggleTheme} className="text-sm text-gray-200 hover:text-white">

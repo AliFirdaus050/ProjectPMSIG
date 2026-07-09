@@ -46,6 +46,7 @@ const CHECKLIST_CONFIG = {
     hasInkStock: false,
     hasTechnicianNotes: false,
     signatureBlocks: ['IT Site Operations', 'User', 'Technician'],
+    hasPic: true,
   },
 
   Switch: {
@@ -76,6 +77,7 @@ const CHECKLIST_CONFIG = {
     hasInkStock: false,
     hasTechnicianNotes: true,
     signatureBlocks: ['IT Site Operation', 'Technician'],
+    hasPic: false,
   },
 
   Printer: {
@@ -102,6 +104,7 @@ const CHECKLIST_CONFIG = {
     hasInkStock: true, // black, cyan, magenta, yellow — free text
     hasTechnicianNotes: true,
     signatureBlocks: ['Person In Charge, SIG', 'PIC', 'Officer Preventive Maintenance'],
+    hasPic: true,
   },
 };
 

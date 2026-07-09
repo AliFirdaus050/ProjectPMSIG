@@ -16,12 +16,19 @@ function formatIndonesianDate(date) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function signatureImgOrBlank(signatureData) {
+  return signatureData ? `<img src="${signatureData}" class="signature-image" />` : '';
+}
+
 function buildPrinterChecklistHtml(checklist) {
   const {
     asset_name, asset_tag, site, model, serial_number, detail_location,
     checklist_date, hostname_note, ip_address, mac_address,
     device_items, firmware_series, consumable_type,
     ink_black, ink_cyan, ink_magenta, ink_yellow, technician_notes,
+    technician_name, technician_signature,
+    pic_name, pic_signature,
+    spv_name, spv_signature, spv_approved_at,
   } = checklist;
 
   function itemRow(item) {
@@ -63,9 +70,12 @@ function buildPrinterChecklistHtml(checklist) {
   .free-notes { border-top: 1px solid #D1D5DB; margin-top: 8px; padding-top: 30px; }
   .signatures { display: flex; justify-content: space-between; margin-top: 30px; }
   .signature-block { width: 30%; text-align: center; font-size: 11px; }
-  .signature-date-line { padding-bottom: 3px; margin-bottom: 8px; font-size: 10px; min-height: 12px; }
-  .signature-label { margin-bottom: 65px; }
-  .signature-line { border-top: 1px dashed #111827; }
+  .signature-date-line { padding-bottom: 3px; margin-bottom: 4px; font-size: 10px; min-height: 12px; }
+  .signature-label { margin-bottom: 4px; font-weight: 600; }
+  .signature-image-slot { height: 55px; display: flex; align-items: flex-end; justify-content: center; }
+  .signature-image { max-width: 130px; max-height: 50px; }
+  .signature-line { border-top: 1px dashed #111827; margin-top: 4px; }
+  .signature-name { margin-top: 4px; font-size: 10px; color: #374151; }
 </style>
 </head>
 <body>
@@ -126,19 +136,25 @@ function buildPrinterChecklistHtml(checklist) {
 
   <div class="signatures">
     <div class="signature-block">
-      <div class="signature-date-line">&nbsp;</div>
+      <div class="signature-date-line">${spv_approved_at ? `Tuban, ${formatIndonesianDate(new Date(spv_approved_at))}` : '&nbsp;'}</div>
       <div class="signature-label">Person In Charge, SIG</div>
+      <div class="signature-image-slot">${signatureImgOrBlank(spv_signature)}</div>
       <div class="signature-line"></div>
+      ${spv_name ? `<div class="signature-name">${spv_name}</div>` : ''}
     </div>
     <div class="signature-block">
       <div class="signature-date-line">&nbsp;</div>
       <div class="signature-label">PIC</div>
+      <div class="signature-image-slot">${signatureImgOrBlank(pic_signature)}</div>
       <div class="signature-line"></div>
+      ${pic_name ? `<div class="signature-name">${pic_name}</div>` : ''}
     </div>
     <div class="signature-block">
       <div class="signature-date-line">Tuban, ${formatIndonesianDate(new Date())}</div>
       <div class="signature-label">Officer Preventive Maintenance</div>
+      <div class="signature-image-slot">${signatureImgOrBlank(technician_signature)}</div>
       <div class="signature-line"></div>
+      ${technician_name ? `<div class="signature-name">${technician_name}</div>` : ''}
     </div>
   </div>
 </body>

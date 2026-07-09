@@ -1,11 +1,12 @@
 const express = require('express');
 const pool = require('../config/db');
-const { authenticate } = require('../middleware/auth');
-const { getChecklistConfig, getAllDeviceItems } = require('../utils/checklistDefaults');
+const { authenticate, authorize } = require('../middleware/auth');
+const { getChecklistConfig, getAllDeviceItems, CHECKLIST_CONFIG } = require('../utils/checklistDefaults');
 const { buildChecklistHtml } = require('../templates/pmChecklistTemplate');
 const { buildSwitchChecklistHtml } = require('../templates/switchChecklistTemplate');
 const { buildPrinterChecklistHtml } = require('../templates/printerChecklistTemplate');
 const { generateChecklistPdf } = require('../services/pdfGenerator');
+const { getPeriodForDate } = require('../utils/period');
 
 function getTemplateBuilder(assetName) {
   const builders = {
@@ -57,11 +58,44 @@ router.post('/', async (req, res) => {
       });
     }
 
+    const { periodKey } = getPeriodForDate();
+
+    // Gating: teknisi hanya boleh PM device yang ada di jadwal periode berjalan.
+    // Admin/SPV dikecualikan (butuh akses penuh untuk keperluan support/testing).
+    if (req.user.role === 'teknisi') {
+      const scheduleCheck = await pool.query(
+        'SELECT id FROM pm_schedules WHERE period_key = $1 AND asset_id = $2',
+        [periodKey, asset_id]
+      );
+      if (scheduleCheck.rows.length === 0) {
+        return res.status(403).json({
+          message: `Aset ini tidak ada di jadwal PM periode ${periodKey}. Hubungi Admin/SPV untuk menambahkan ke jadwal.`,
+        });
+      }
+    }
+
+    // Auto-suggest PIC dari relasi pic_assets (kalau ada akun PIC yang di-assign manual)
+    const picResult = await pool.query(
+      `SELECT u.id, u.full_name FROM pic_assets pa
+       JOIN users u ON pa.pic_user_id = u.id
+       WHERE pa.asset_id = $1`,
+      [asset_id]
+    );
+    const suggestedPicId = picResult.rows.length === 1 ? picResult.rows[0].id : null;
+
+    // pic_name (teks bebas untuk PDF) diambil dari jadwal periode berjalan.
+    // Ini independen dari pic_user_id di atas — tidak butuh akun PIC untuk terisi.
+    const scheduleResult = await pool.query(
+      'SELECT pic_name FROM pm_schedules WHERE period_key = $1 AND asset_id = $2',
+      [periodKey, asset_id]
+    );
+    const scheduledPicName = scheduleResult.rows[0]?.pic_name || null;
+
     const result = await pool.query(
-      `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note)
-       VALUES ($1, $2, 'draft', $3)
+      `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note, period_key, pic_user_id, pic_name)
+       VALUES ($1, $2, 'draft', $3, $4, $5, $6)
        RETURNING *`,
-      [asset_id, req.user.id, hostname]
+      [asset_id, req.user.id, hostname, periodKey, suggestedPicId, scheduledPicName]
     );
 
     res.status(201).json(result.rows[0]);
@@ -88,6 +122,10 @@ router.patch('/:id', async (req, res) => {
     ink_magenta,
     ink_yellow,
     technician_notes,
+    pic_name,
+    pic_user_id,
+    technician_signature,
+    pic_signature,
   } = req.body;
 
   const normalizedConsumableType = consumable_type === '' ? null : consumable_type;
@@ -117,11 +155,16 @@ router.patch('/:id', async (req, res) => {
            ink_magenta = COALESCE($8, ink_magenta),
            ink_yellow = COALESCE($9, ink_yellow),
            technician_notes = COALESCE($10, technician_notes),
+           pic_name = COALESCE($11, pic_name),
+           pic_user_id = COALESCE($12, pic_user_id),
+           technician_signature = COALESCE($13, technician_signature),
+           pic_signature = COALESCE($14, pic_signature),
            updated_at = now()
-       WHERE id = $11`,
+       WHERE id = $15`,
       [
         hostname_note, ip_address, mac_address, firmware_series, normalizedConsumableType,
-        ink_black, ink_cyan, ink_magenta, ink_yellow, technician_notes, id,
+        ink_black, ink_cyan, ink_magenta, ink_yellow, technician_notes,
+        pic_name, pic_user_id, technician_signature, pic_signature, id,
       ]
     );
 
@@ -177,9 +220,13 @@ router.patch('/:id', async (req, res) => {
 // Helper: ambil data lengkap checklist + kategori aset, dipakai di beberapa endpoint
 async function fetchFullChecklist(id) {
   const checklistResult = await pool.query(
-    `SELECT pc.*, a.asset_name, a.asset_tag, a.serial_number, a.site, a.model, a.detail_location
+    `SELECT pc.*, a.asset_name, a.asset_tag, a.serial_number, a.site, a.model, a.detail_location,
+            tech.full_name AS technician_name,
+            spv.full_name AS spv_name
      FROM pm_checklists pc
      JOIN assets a ON pc.asset_id = a.id
+     JOIN users tech ON pc.technician_id = tech.id
+     LEFT JOIN users spv ON pc.spv_id = spv.id
      WHERE pc.id = $1`,
     [id]
   );
@@ -221,6 +268,15 @@ router.post('/:id/generate-pdf', async (req, res) => {
       });
     }
 
+    const config = getChecklistConfig(checklist.asset_name);
+
+    if (!checklist.technician_signature) {
+      return res.status(400).json({ message: 'Tanda tangan Teknisi wajib diisi sebelum generate PDF.' });
+    }
+    if (config.hasPic && (!checklist.pic_signature || !checklist.pic_name)) {
+      return res.status(400).json({ message: 'Nama dan tanda tangan PIC wajib diisi sebelum generate PDF.' });
+    }
+
     const buildHtml = getTemplateBuilder(checklist.asset_name);
     if (!buildHtml) {
       return res.status(400).json({
@@ -243,6 +299,55 @@ router.post('/:id/generate-pdf', async (req, res) => {
     });
   } catch (err) {
     console.error('Generate PDF error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
+});
+
+// POST /api/v1/checklists/:id/approve — SPV approve checklist (alur akhir, Bagian 4 draft)
+router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
+  const { id } = req.params;
+  const { manual_signature } = req.body; // opsional, kalau SPV mau tanda tangan ulang bukan pakai yang tersimpan
+
+  try {
+    const checklistResult = await pool.query('SELECT status FROM pm_checklists WHERE id = $1', [id]);
+    if (checklistResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Checklist tidak ditemukan.' });
+    }
+    if (checklistResult.rows[0].status !== 'completed') {
+      return res.status(400).json({
+        message: 'Checklist harus berstatus "completed" (sudah di-generate PDF oleh teknisi) sebelum bisa di-approve.',
+      });
+    }
+
+    let signatureToUse = manual_signature;
+    if (!signatureToUse) {
+      const savedSignature = await pool.query(
+        'SELECT signature_data FROM user_signatures WHERE user_id = $1',
+        [req.user.id]
+      );
+      if (savedSignature.rows.length === 0) {
+        return res.status(400).json({
+          message: 'Kamu belum punya tanda tangan tersimpan. Simpan tanda tangan dulu di halaman profil, atau kirim manual_signature.',
+        });
+      }
+      signatureToUse = savedSignature.rows[0].signature_data;
+    }
+
+    const updateResult = await pool.query(
+      `UPDATE pm_checklists
+       SET status = 'approved', spv_id = $1, spv_signature = $2, spv_approved_at = now(), updated_at = now()
+       WHERE id = $3
+       RETURNING *`,
+      [req.user.id, signatureToUse, id]
+    );
+
+    res.json({
+      checklist_id: id,
+      status: 'approved',
+      spv_approved_at: updateResult.rows[0].spv_approved_at,
+    });
+  } catch (err) {
+    console.error('Approve checklist error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
   }
 });
@@ -282,16 +387,29 @@ router.get('/:id', async (req, res) => {
 
 // GET /api/v1/checklists — riwayat, dengan filter (Bagian 4.3 PRD)
 router.get('/', async (req, res) => {
-  const { site, serial_number, date_from, date_to, asset_name } = req.query;
+  const { site, serial_number, date_from, date_to, asset_name, status, period_key } = req.query;
   const conditions = [];
   const values = [];
 
   if (req.user.role === 'teknisi') {
     values.push(req.user.id);
     conditions.push(`pc.technician_id = $${values.length}`);
+  } else if (req.user.role === 'pic') {
+    // PIC cuma lihat checklist untuk device yang jadi tanggung jawabnya (pic_assets)
+    values.push(req.user.id);
+    conditions.push(`pc.asset_id IN (SELECT asset_id FROM pic_assets WHERE pic_user_id = $${values.length})`);
   } else if (req.query.technician_id) {
     values.push(req.query.technician_id);
     conditions.push(`pc.technician_id = $${values.length}`);
+  }
+
+  if (status) {
+    values.push(status);
+    conditions.push(`pc.status = $${values.length}`);
+  }
+  if (period_key) {
+    values.push(period_key);
+    conditions.push(`pc.period_key = $${values.length}`);
   }
 
   if (site) {

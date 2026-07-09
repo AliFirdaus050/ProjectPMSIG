@@ -29,6 +29,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Email atau password salah.' });
     }
 
+    if (!user.is_active) {
+      return res.status(403).json({ message: 'Akun ini sudah dinonaktifkan. Hubungi Admin.' });
+    }
+
     const token = jwt.sign(
       { sub: user.id, role: user.role },
       process.env.JWT_SECRET,
