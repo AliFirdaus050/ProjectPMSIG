@@ -12,6 +12,7 @@ import UserManagementPage from './pages/UserManagementPage';
 import TrackerPage from './pages/TrackerPage';
 import AssetDatabasePage from './pages/AssetDatabasePage';
 import ScheduleUploadPage from './pages/ScheduleUploadPage';
+import ProfilePage from './pages/ProfilePage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -28,6 +29,14 @@ function AdminRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
+function SpvRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-8 text-gray-500 text-sm">Memuat...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'spv') return <Navigate to="/" replace />;
+  return <Layout>{children}</Layout>;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -41,6 +50,7 @@ function AppRoutes() {
       <Route path="/tracker" element={<ProtectedRoute><TrackerPage /></ProtectedRoute>} />
       <Route path="/devices" element={<ProtectedRoute><AssetDatabasePage /></ProtectedRoute>} />
       <Route path="/upload-jadwal" element={<ProtectedRoute><ScheduleUploadPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<SpvRoute><ProfilePage /></SpvRoute>} />
     </Routes>
   );
 }

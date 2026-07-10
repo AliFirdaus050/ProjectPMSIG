@@ -81,34 +81,50 @@ export default function SerialLookupPage() {
   }
 
   return (
-    <div className="py-10 px-4">
-      <div className="max-w-md mx-auto">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Checklist PM Baru</h1>
+    <div className="p-margin-mobile md:py-10">
+      <div className="max-w-sm mx-auto w-full">
+        <div className="mb-stack-comfortable">
+          <h1 className="font-headline-sm text-headline-sm text-on-surface dark:text-gray-100 mb-1">Checklist PM Baru</h1>
+          <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400">
+            Silakan masukkan atau scan Serial Number untuk memulai proses Preventive Maintenance.
+          </p>
+        </div>
 
-        <form onSubmit={handleSearch} className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 mb-4">
-          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Serial Number</label>
-          <div className="flex gap-2">
-            <input
-              value={serialNumber}
-              onChange={(e) => setSerialNumber(e.target.value)}
-              required
-              className="flex-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
-              placeholder="Contoh: FD45A37"
-            />
-            <button
-              type="submit"
-              disabled={searching}
-              className="bg-primary hover:bg-primary-dark text-white rounded px-4 text-sm font-medium disabled:opacity-50"
-            >
-              {searching ? '...' : 'Cari'}
-            </button>
+        <form onSubmit={handleSearch} className="mb-stack-comfortable">
+          <label className="block font-label-md text-label-md text-on-surface-variant dark:text-gray-400 mb-unit" htmlFor="serialNumber">
+            Serial Number
+          </label>
+          <input
+            id="serialNumber"
+            value={serialNumber}
+            onChange={(e) => setSerialNumber(e.target.value)}
+            required
+            placeholder="Contoh: FD45A37"
+            className="w-full h-10 px-3 bg-surface-container-lowest dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 rounded font-body-md text-on-surface dark:text-gray-100 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all mb-3"
+          />
+
+          <button
+            type="submit"
+            disabled={searching}
+            className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-label-md text-label-md rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-[20px]">search</span>
+            {searching ? 'Mencari...' : 'Cari Data'}
+          </button>
+
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-outline-variant dark:border-slate-600" />
+            <span className="flex-shrink-0 mx-4 font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400 uppercase tracking-wider">Atau</span>
+            <div className="flex-grow border-t border-outline-variant dark:border-slate-600" />
           </div>
+
           <button
             type="button"
             onClick={() => setShowScanner(true)}
-            className="mt-2 w-full border border-primary text-primary dark:border-blue-300 dark:text-blue-300 rounded py-2 text-sm font-medium"
+            className="w-full h-11 bg-surface-container-lowest dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-primary font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-surface-container-low dark:hover:bg-slate-600 transition-colors"
           >
-            📷 Scan Barcode
+            <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+            Scan Barcode
           </button>
         </form>
 
@@ -116,26 +132,25 @@ export default function SerialLookupPage() {
           <BarcodeScanner onScan={handleScanResult} onClose={() => setShowScanner(false)} />
         )}
 
-        {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
+        {error && <div className="bg-red-50 text-red-600 font-body-sm text-body-sm rounded p-3 mb-4">{error}</div>}
 
         {matches && matches.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-3">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+          <div className="bg-surface-container-lowest dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded p-4 space-y-3">
+            <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-300">
               {matches.length > 1
                 ? `Ditemukan ${matches.length} aset dengan serial number ini — pilih sesuai lokasi kunjungan:`
                 : 'Aset ditemukan:'}
             </p>
             {matches.map((asset) => (
-              <div key={asset.id} className="bg-gray-50 dark:bg-slate-700 rounded p-3 text-sm">
-                <p className="text-gray-900 dark:text-gray-100"><strong>{asset.asset_name}</strong> — {asset.model}</p>
-                <p className="text-gray-500 dark:text-gray-400">Asset Tag: {asset.asset_tag}</p>
-
-                <p className="text-gray-500 dark:text-gray-400">
+              <div key={asset.id} className="bg-surface dark:bg-slate-700 rounded p-3 font-body-sm text-body-sm">
+                <p className="text-on-surface dark:text-gray-100"><strong>{asset.asset_name}</strong> — {asset.model}</p>
+                <p className="text-on-surface-variant dark:text-gray-400">Asset Tag: {asset.asset_tag}</p>
+                <p className="text-on-surface-variant dark:text-gray-400">
                   Site: {asset.site} — {asset.detail_location}
                 </p>
                 <button
                   onClick={() => startChecklist(asset.id)}
-                  className="mt-2 bg-primary hover:bg-primary-dark text-white rounded px-3 py-1.5 text-sm"
+                  className="mt-2 bg-primary hover:bg-primary-dark text-white rounded px-3 py-1.5 font-body-sm text-body-sm"
                 >
                   Lanjut ke Checklist
                 </button>
@@ -145,49 +160,49 @@ export default function SerialLookupPage() {
         )}
 
         {notFound && (
-          <form onSubmit={handleRegisterAsset} className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-3">
-            <p className="text-sm text-amber-600 mb-2">
+          <form onSubmit={handleRegisterAsset} className="bg-surface-container-lowest dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded p-4 space-y-3">
+            <p className="font-body-sm text-body-sm text-amber-600 mb-2">
               Aset tidak ditemukan. Daftarkan aset baru untuk Serial Number "{serialNumber}":
             </p>
 
             <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Asset Name (Device)</label>
-            <select
+              <label className="block font-label-md text-label-md text-on-surface-variant dark:text-gray-400 mb-1">Asset Name (Device)</label>
+              <select
                 value={newAsset.asset_name}
                 onChange={(e) => setNewAsset({ ...newAsset, asset_name: e.target.value })}
                 required
-                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
-            >
+                className="w-full h-10 px-3 border border-[#CBD5E1] dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
                 <option value="">Pilih kategori device</option>
                 <option value="PC/Laptop">PC/Laptop</option>
                 <option value="Printer">Printer</option>
                 <option value="Switch">Switch</option>
-            </select>
+              </select>
             </div>
 
             {[
-                ['asset_tag', 'Asset Tag'],
-                ['model', 'Model'],
-                ['category', 'Category'],
-                ['hostname', 'Hostname (opsional)'],
-                ['site', 'Site'],
-                ['detail_location', 'Detail Location'],
+              ['asset_tag', 'Asset Tag'],
+              ['model', 'Model'],
+              ['category', 'Category'],
+              ['hostname', 'Hostname (opsional)'],
+              ['site', 'Site'],
+              ['detail_location', 'Detail Location'],
             ].map(([field, label]) => (
-            <div key={field}>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{label}</label>
+              <div key={field}>
+                <label className="block font-label-md text-label-md text-on-surface-variant dark:text-gray-400 mb-1">{label}</label>
                 <input
-                    value={newAsset[field]}
-                    onChange={(e) => setNewAsset({ ...newAsset, [field]: e.target.value })}
-                    required={field !== 'hostname' && field !== 'detail_location' && field !== 'category'}
-                    className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
+                  value={newAsset[field]}
+                  onChange={(e) => setNewAsset({ ...newAsset, [field]: e.target.value })}
+                  required={field !== 'hostname' && field !== 'detail_location' && field !== 'category'}
+                  className="w-full h-10 px-3 border border-[#CBD5E1] dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
-            </div>
+              </div>
             ))}
 
             <button
               type="submit"
               disabled={savingAsset}
-              className="w-full bg-primary hover:bg-primary-dark text-white rounded py-2 text-sm font-medium disabled:opacity-50"
+              className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-label-md text-label-md rounded disabled:opacity-50"
             >
               {savingAsset ? 'Menyimpan...' : 'Simpan & Lanjutkan'}
             </button>

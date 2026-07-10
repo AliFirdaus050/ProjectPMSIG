@@ -1,51 +1,125 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+
+// Daftar link nav didefinisikan sekali, dipakai ulang untuk versi desktop
+// (horizontal bar) dan mobile (menu hamburger) — supaya kondisi role selalu
+// konsisten di kedua tempat tanpa duplikasi logic.
+function useNavLinks(role) {
+  const links = [
+    { to: '/', label: 'Home', show: true },
+    { to: '/checklist-baru', label: 'PM', show: role === 'teknisi' || role === 'admin' },
+    { to: '/upload-jadwal', label: 'Schedule', show: role === 'teknisi' || role === 'admin' },
+    { to: '/tracker', label: 'Tracker', show: role === 'teknisi' || role === 'spv' || role === 'pic' || role === 'admin' },
+    { to: '/history', label: 'History', show: role === 'teknisi' || role === 'admin' },
+    { to: '/devices', label: 'Database', show: role === 'teknisi' || role === 'spv' || role === 'admin' },
+    { to: '/users', label: 'Manage User', show: role === 'admin' },
+  ];
+  return links.filter((l) => l.show);
+}
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navLinks = useNavLinks(user?.role);
 
   function handleLogout() {
     logout();
     navigate('/login');
   }
 
+  const navLinkClass = ({ isActive }) =>
+    `text-label-md font-label-md py-5 h-full flex items-center transition-colors duration-200 cursor-pointer ${
+      isActive
+        ? 'text-white border-b-2 border-primary font-bold'
+        : 'text-slate-300 hover:text-white hover:bg-slate-800'
+    }`;
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors">
-      <header className="bg-primary dark:bg-primary-dark text-white">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-semibold">PM Checklist</span>
-                <Link to="/" className="text-sm text-gray-200 hover:text-white">Home</Link>
-            {(user?.role === 'teknisi' || user?.role === 'admin') && (
-                <Link to="/checklist-baru" className="text-sm text-gray-200 hover:text-white">PM</Link>
-            )}
-            {(user?.role === 'teknisi' || user?.role === 'admin') && (
-                <Link to="/upload-jadwal" className="text-sm text-gray-200 hover:text-white">Schedule</Link>
-            )}
-            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'pic' || user?.role === 'admin') && (
-                <Link to="/tracker" className="text-sm text-gray-200 hover:text-white">Tracker</Link>
-            )}
-            {(user?.role === 'teknisi' || user?.role === 'admin') && (
-                <Link to="/history" className="text-sm text-gray-200 hover:text-white">History</Link>
-            )}
-            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'admin') && (
-                <Link to="/devices" className="text-sm text-gray-200 hover:text-white">Database</Link>
-            )}
-            {user?.role === 'admin' && (
-                <Link to="/users" className="text-sm text-gray-200 hover:text-white">Manage User</Link>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={toggleTheme} className="text-sm text-gray-200 hover:text-white">
-              {isDark ? '☀️ Light' : '🌙 Dark'}
+    <div className="min-h-screen bg-background dark:bg-slate-900 transition-colors">
+      <header className="bg-navy border-b border-outline-variant w-full">
+        <div className="max-w-container-max mx-auto h-16 flex items-center justify-between px-margin-mobile md:px-margin-desktop">
+          <div className="flex items-center gap-stack-comfortable">
+            {/* Hamburger — cuma muncul di mobile */}
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="md:hidden text-white p-1 -ml-1"
+              aria-label="Menu"
+            >
+              <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
             </button>
-            {user && <span className="text-sm text-gray-200">{user.full_name}</span>}
-            <button onClick={handleLogout} className="text-sm text-gray-200 hover:text-white">Logout</button>
+            <Link to="/" className="font-headline-md text-headline-md font-bold text-white">
+              PM Checklist
+            </Link>
+          </div>
+
+          {/* Nav horizontal — desktop only */}
+          <nav className="hidden md:flex items-center gap-stack-comfortable h-full">
+            {navLinks.map((link) => (
+              <NavLink key={link.to} to={link.to} end={link.to === '/'} className={navLinkClass}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-stack-compact">
+            {user?.role === 'spv' && (
+              <Link
+                to="/profile"
+                className="hidden md:block text-body-sm text-slate-300 hover:text-white px-2"
+              >
+                Profil
+              </Link>
+            )}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors duration-200"
+              aria-label="Toggle dark mode"
+            >
+              <span className="material-symbols-outlined">{isDark ? 'light_mode' : 'dark_mode'}</span>
+            </button>
+            <span className="hidden sm:block text-body-sm text-slate-300">{user?.full_name}</span>
+            <button
+              onClick={handleLogout}
+              className="text-body-sm text-slate-300 hover:text-white px-2 py-1 hover:bg-slate-800 rounded transition-colors duration-200"
+            >
+              Logout
+            </button>
           </div>
         </div>
+
+        {/* Menu mobile (slide-down), cuma render kalau dibuka */}
+        {mobileMenuOpen && (
+          <nav className="md:hidden border-t border-slate-700 bg-navy px-margin-mobile py-stack-compact flex flex-col">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === '/'}
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  `py-3 text-body-md border-b border-slate-800 last:border-0 ${
+                    isActive ? 'text-white font-bold' : 'text-slate-300'
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            {user?.role === 'spv' && (
+              <Link
+                to="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-3 text-body-md text-slate-300 border-b border-slate-800"
+              >
+                Profil
+              </Link>
+            )}
+          </nav>
+        )}
       </header>
       <main>{children}</main>
     </div>

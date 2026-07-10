@@ -341,11 +341,24 @@ router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
       [req.user.id, signatureToUse, id]
     );
 
+    // PDF sebelumnya dibuat teknisi tanpa tanda tangan SPV (belum approve saat itu).
+    // Regenerate sekarang supaya PDF final sudah termasuk tanda tangan SPV.
+    const checklistForPdf = await fetchFullChecklist(id);
+    const buildHtml = getTemplateBuilder(checklistForPdf.asset_name);
+    if (buildHtml) {
+      const html = buildHtml(checklistForPdf);
+      const { publicPath } = await generateChecklistPdf(id, html);
+      await pool.query('UPDATE pm_checklists SET pdf_path = $1 WHERE id = $2', [publicPath, id]);
+      updateResult.rows[0].pdf_path = publicPath;
+    }
+
     res.json({
       checklist_id: id,
       status: 'approved',
       spv_approved_at: updateResult.rows[0].spv_approved_at,
+      pdf_url: updateResult.rows[0].pdf_path,
     });
+
   } catch (err) {
     console.error('Approve checklist error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });

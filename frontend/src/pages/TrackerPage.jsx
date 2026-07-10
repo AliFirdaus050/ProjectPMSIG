@@ -4,9 +4,9 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 const STATUS_CONFIG = {
-  belum_pm: { label: 'Belum PM', className: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300' },
-  pending_approval: { label: 'Menunggu Approval', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' },
-  approved: { label: 'Disetujui', className: 'bg-status-normal/10 text-status-normal' },
+  belum_pm: { label: 'Belum PM', className: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-gray-300' },
+  pending_approval: { label: 'Menunggu Approval', className: 'bg-amber-100/50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
+  approved: { label: 'Disetujui', className: 'bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
 };
 
 export default function TrackerPage() {
@@ -53,82 +53,103 @@ export default function TrackerPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Tracker PM</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        {user?.role === 'pic'
-          ? 'Status PM untuk device yang jadi tanggung jawab kamu.'
-          : 'Status PM seluruh device pada periode berjalan.'}
-      </p>
-
-      <form onSubmit={handlePeriodSubmit} className="flex gap-2 mb-6">
-        <input
-          value={periodKey}
-          onChange={(e) => setPeriodKey(e.target.value)}
-          placeholder="YYYY-MM"
-          className="border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm w-40"
-        />
-        <button type="submit" className="bg-primary hover:bg-primary-dark text-white rounded px-4 py-2 text-sm">
-          Tampilkan Periode
-        </button>
-      </form>
+    <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-comfortable md:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface dark:text-gray-100">Tracker</h1>
+          <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400 mt-1">
+            {user?.role === 'pic'
+              ? 'Status PM untuk device yang jadi tanggung jawab kamu.'
+              : 'Status PM seluruh device pada periode berjalan.'}
+          </p>
+        </div>
+        <form onSubmit={handlePeriodSubmit} className="flex gap-2">
+          <input
+            value={periodKey}
+            onChange={(e) => setPeriodKey(e.target.value)}
+            placeholder="YYYY-MM"
+            className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-100 font-body-sm text-body-sm rounded h-8 px-3 w-32 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+          <button type="submit" className="bg-primary hover:bg-primary-dark text-white font-body-sm text-body-sm font-medium h-8 px-4 rounded">
+            Tampilkan
+          </button>
+        </form>
+      </div>
 
       {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
 
-      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
-            <tr>
-              <th className="text-left p-3">Device</th>
-              <th className="text-left p-3">Serial Number Tag</th>
-              <th className="text-left p-3">Site</th>
-              <th className="text-left p-3">Teknisi</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-left p-3">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="p-4 text-center text-gray-500">Memuat...</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={6} className="p-4 text-center text-gray-500">Tidak ada device di jadwal periode ini.</td></tr>
-            ) : (
-              rows.map((row) => {
-                const statusInfo = STATUS_CONFIG[row.tracker_status];
-                return (
-                  <tr key={row.asset_id} className="border-t border-gray-100 dark:border-slate-700 text-gray-800 dark:text-gray-200">
-                    <td className="p-3">{row.asset_name}</td>
-                    <td className="p-3">{row.serial_number}</td>
-                    <td className="p-3">{row.site}</td>
-                    <td className="p-3">{row.technician_name || '-'}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${statusInfo.className}`}>{statusInfo.label}</span>
-                    </td>
-                    <td className="p-3">
-                      {row.tracker_status === 'pending_approval' && user?.role === 'spv' && (
-                        <button
-                          onClick={() => handleApprove(row.checklist_id)}
-                          disabled={approvingId === row.checklist_id}
-                          className="bg-primary hover:bg-primary-dark text-white rounded px-3 py-1 text-xs disabled:opacity-50"
-                        >
-                          {approvingId === row.checklist_id ? 'Memproses...' : 'Approve'}
-                        </button>
-                      )}
-                      {row.checklist_id && (
-                        <Link
-                          to={row.status === 'draft' ? `/checklist/${row.checklist_id}` : `/checklist/${row.checklist_id}/preview`}
-                          className="text-primary dark:text-blue-300 underline text-xs ml-2"
-                        >
-                          {row.status === 'draft' ? 'Lanjutkan' : 'Lihat PDF'}
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="bg-surface dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded overflow-hidden shadow-sm">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
+          <div className="col-span-3">Device</div>
+          <div className="col-span-2">Serial Number</div>
+          <div className="col-span-2">Site</div>
+          <div className="col-span-1">Teknisi</div>
+          <div className="col-span-2">Status</div>
+          <div className="col-span-2 text-right">Aksi</div>
+        </div>
+
+        <div className="flex flex-col divide-y divide-[#E2E8F0] dark:divide-slate-700">
+          {loading ? (
+            <div className="p-4 text-center font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400">Memuat...</div>
+          ) : rows.length === 0 ? (
+            <div className="p-4 text-center font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400">
+              Tidak ada device di jadwal periode ini.
+            </div>
+          ) : (
+            rows.map((row, i) => {
+              const statusInfo = STATUS_CONFIG[row.tracker_status];
+              return (
+                <div
+                  key={row.asset_id}
+                  className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 md:py-0 md:h-10 items-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                    i % 2 === 1 ? 'bg-[#F1F5F9] dark:bg-slate-800/60' : 'bg-surface dark:bg-slate-800'
+                  }`}
+                >
+                  <div className="md:col-span-3">
+                    <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Device:</span>
+                    <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-100 font-semibold">{row.asset_name}</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Serial:</span>
+                    <span className="font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{row.serial_number}</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Site:</span>
+                    <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.site}</span>
+                  </div>
+                  <div className="md:col-span-1">
+                    <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Teknisi:</span>
+                    <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.technician_name || '-'}</span>
+                  </div>
+                  <div className="md:col-span-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-label-md text-[10px] tracking-wider uppercase ${statusInfo.className}`}>
+                      {statusInfo.label}
+                    </span>
+                  </div>
+                  <div className="md:col-span-2 flex items-center gap-2 md:justify-end">
+                    {row.tracker_status === 'pending_approval' && user?.role === 'spv' && (
+                      <button
+                        onClick={() => handleApprove(row.checklist_id)}
+                        disabled={approvingId === row.checklist_id}
+                        className="bg-primary hover:bg-primary-dark text-white h-7 px-3 rounded-sm font-body-sm text-body-sm font-medium disabled:opacity-50"
+                      >
+                        {approvingId === row.checklist_id ? 'Memproses...' : 'Approve'}
+                      </button>
+                    )}
+                    {row.checklist_id && (
+                      <Link
+                        to={row.status === 'draft' ? `/checklist/${row.checklist_id}` : `/checklist/${row.checklist_id}/preview`}
+                        className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-200 h-7 px-3 rounded-sm font-body-sm text-body-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center"
+                      >
+                        {row.status === 'draft' ? 'Lanjutkan' : 'Lihat PDF'}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
