@@ -3,7 +3,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
-const { getPeriodForDate, getNextPeriod } = require('../utils/period');
+const { getPeriodForDate, getNextPeriod, getPeriodsList, formatPeriodLabel } = require('../utils/period');
 
 const router = express.Router();
 router.use(authenticate);
@@ -23,6 +23,37 @@ router.get('/period-info', (req, res) => {
   const current = getPeriodForDate();
   const next = getNextPeriod();
   res.json({ current, next });
+});
+
+// GET /api/v1/schedules/periods — daftar 12 periode ke depan + status upload
+router.get('/periods', async (req, res) => {
+  try {
+    const periods = getPeriodsList(12);
+    const periodKeys = periods.map((p) => p.periodKey);
+
+    const countResult = await pool.query(
+      `SELECT period_key, COUNT(*) as device_count
+       FROM pm_schedules
+       WHERE period_key = ANY($1)
+       GROUP BY period_key`,
+      [periodKeys]
+    );
+    const countMap = new Map(countResult.rows.map((r) => [r.period_key, parseInt(r.device_count, 10)]));
+
+    const data = periods.map((p) => ({
+      period_key: p.periodKey,
+      label: formatPeriodLabel(p),
+      start_date: p.startDate,
+      end_date: p.endDate,
+      device_count: countMap.get(p.periodKey) || 0,
+      has_schedule: countMap.has(p.periodKey),
+    }));
+
+    res.json(data);
+  } catch (err) {
+    console.error('List periods error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
 });
 
 // Mapping teks "Kategori Perangkat" di Excel -> asset_name di database.
@@ -249,8 +280,7 @@ router.get('/tracker', async (req, res) => {
 
     const data = result.rows.map((row) => {
       let trackerStatus = 'belum_pm';
-      if (row.status === 'draft') trackerStatus = 'draft';
-      else if (row.status === 'completed') trackerStatus = 'pending_approval';
+      if (row.status === 'completed') trackerStatus = 'pending_approval';
       else if (row.status === 'approved') trackerStatus = 'approved';
 
       return { ...row, tracker_status: trackerStatus };

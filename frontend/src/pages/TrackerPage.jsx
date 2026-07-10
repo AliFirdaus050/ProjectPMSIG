@@ -4,9 +4,8 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 const STATUS_CONFIG = {
-  belum_pm: { label: 'Belum di-PM', className: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300' },
-  draft: { label: 'Sedang Dikerjakan', className: 'bg-status-warning/10 text-status-warning' },
-  pending_approval: { label: 'Menunggu Approval SPV', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' },
+  belum_pm: { label: 'Belum PM', className: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300' },
+  pending_approval: { label: 'Menunggu Approval', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' },
   approved: { label: 'Disetujui', className: 'bg-status-normal/10 text-status-normal' },
 };
 
@@ -117,10 +116,10 @@ export default function TrackerPage() {
                       )}
                       {row.checklist_id && (
                         <Link
-                          to={row.tracker_status === 'draft' ? `/checklist/${row.checklist_id}` : `/checklist/${row.checklist_id}/preview`}
+                          to={row.status === 'draft' ? `/checklist/${row.checklist_id}` : `/checklist/${row.checklist_id}/preview`}
                           className="text-primary dark:text-blue-300 underline text-xs ml-2"
                         >
-                          {row.tracker_status === 'draft' ? 'Lanjutkan' : 'Lihat PDF'}
+                          {row.status === 'draft' ? 'Lanjutkan' : 'Lihat PDF'}
                         </Link>
                       )}
                     </td>
