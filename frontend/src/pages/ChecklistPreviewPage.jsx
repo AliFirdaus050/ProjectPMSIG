@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../api/client';
 
-const BACKEND_ORIGIN = 'http://localhost:4000';
+//const BACKEND_ORIGIN = 'http://localhost:4000';
+const BACKEND_ORIGIN = '';
 
 export default function ChecklistPreviewPage() {
   const { id } = useParams();

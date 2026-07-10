@@ -8,27 +8,42 @@ export default function BarcodeScanner({ onScan, onClose }) {
   const containerId = 'barcode-scanner-container';
 
   useEffect(() => {
+    let cancelled = false;
     const scanner = new Html5Qrcode(containerId);
     scannerRef.current = scanner;
+
+    // stop() milik html5-qrcode bisa throw secara langsung (bukan reject promise)
+    // kalau dipanggil saat scanner belum/tidak sedang "running". Ini terjadi kalau
+    // React StrictMode memanggil cleanup sebelum scanner.start() selesai jalan.
+    // Makanya di-bungkus try/catch, bukan cuma .catch(), supaya gak crash.
+    const safeStop = async () => {
+      try {
+        if (scannerRef.current && scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+      } catch (e) {
+        // Aman diabaikan: scanner memang sudah berhenti/belum sempat mulai.
+      }
+    };
 
     scanner
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
+          if (cancelled) return;
           onScan(decodedText);
-          scanner.stop().catch(() => {});
+          safeStop();
         },
         () => {} // error callback per-frame, diabaikan (normal saat belum ketemu barcode)
       )
       .catch((err) => {
-        console.error('Gagal memulai kamera:', err);
+        if (!cancelled) console.error('Gagal memulai kamera:', err);
       });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-      }
+      cancelled = true;
+      safeStop();
     };
   }, [onScan]);
 
@@ -39,7 +54,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Scan Barcode Aset</h3>
           <button onClick={onClose} className="text-gray-400 text-sm">Tutup</button>
         </div>
-        <div id={containerId} className="w-full" />
+        <div id={containerId} className="w-full" style={{ minHeight: '280px' }} />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
           Arahkan kamera ke QR Code/Barcode pada aset.
         </p>
