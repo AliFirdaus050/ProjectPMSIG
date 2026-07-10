@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 //const API_BASE = 'http://localhost:4000/api/v1';
 const API_BASE = '/api/v1';
 
 export default function ScheduleUploadPage() {
+  const { user } = useAuth();
   const [periods, setPeriods] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
@@ -59,6 +62,31 @@ export default function ScheduleUploadPage() {
     }
   }
 
+  async function handleDeletePeriod() {
+    if (!selectedPeriod) return;
+    const periodLabel = periods.find((p) => p.period_key === selectedPeriod)?.label || selectedPeriod;
+    if (!window.confirm(`Yakin hapus semua jadwal periode ${periodLabel}? Data yang sudah diupload untuk periode ini akan hilang permanen (checklist/riwayat PM yang sudah ada tidak ikut terhapus).`)) {
+      return;
+    }
+    setError('');
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('pm_token');
+      const res = await fetch(`${API_BASE}/schedules?period_key=${encodeURIComponent(selectedPeriod)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal menghapus jadwal.');
+      setResult(null);
+      await loadPeriods();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Upload Jadwal PM</h1>
@@ -68,17 +96,29 @@ export default function ScheduleUploadPage() {
       <form onSubmit={handleUpload} className="bg-white dark:bg-slate-800 shadow rounded-lg p-6 space-y-4 mb-6">
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Periode</label>
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
-          >
-            {periods.map((p) => (
-              <option key={p.period_key} value={p.period_key}>
-                {p.label} {p.has_schedule ? `(sudah diupload, ${p.device_count} device)` : '(belum diupload)'}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
+            >
+              {periods.map((p) => (
+                <option key={p.period_key} value={p.period_key}>
+                  {p.label} {p.has_schedule ? `(sudah diupload, ${p.device_count} device)` : '(belum diupload)'}
+                </option>
+              ))}
+            </select>
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={handleDeletePeriod}
+                disabled={deleting || !periods.find((p) => p.period_key === selectedPeriod)?.has_schedule}
+                className="shrink-0 bg-status-error/10 text-status-error hover:bg-status-error/20 rounded px-3 py-2 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Menghapus...' : 'Hapus Jadwal Ini'}
+              </button>
+            )}
+          </div>
         </div>
 
         <div>
@@ -139,6 +179,29 @@ export default function ScheduleUploadPage() {
                 {result.unmatched.map((row, i) => (
                   <div key={i} className="bg-gray-50 dark:bg-slate-700 rounded p-2 text-xs text-gray-700 dark:text-gray-300">
                     Serial: {row.serial_number || '-'} | Model: {row.model || '-'} | Lokasi: {row.detail_location || '-'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.category_breakdown && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                Rincian per kategori yang ditemukan di file (sistem ini cuma proses Switch, Printer, dan Desktop Komputer/Laptop — kategori lain otomatis diskip):
+              </p>
+              <div className="space-y-1">
+                {Object.entries(result.category_breakdown).map(([cat, info]) => (
+                  <div key={cat} className="flex justify-between items-center bg-gray-50 dark:bg-slate-700 rounded p-2 text-xs">
+                    <span className="text-gray-700 dark:text-gray-300">{cat}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-gray-500 dark:text-gray-400">{info.total} baris</span>
+                      {info.supported ? (
+                        <span className="px-1.5 py-0.5 rounded bg-status-normal/10 text-status-normal">Diproses</span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded bg-status-warning/10 text-status-warning">Diskip</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>

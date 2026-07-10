@@ -141,6 +141,7 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
     const unmatched = [];
     let skippedDaily = 0;
     let skippedCategory = 0;
+    const categoryBreakdown = {}; // { 'Perangkat Vicon': { total: 13, supported: false }, ... }
 
     for (const row of validRows) {
       const mapped = {};
@@ -156,6 +157,15 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
       }
 
       if (!mapped.serial_number) continue; // baris kosong total, skip
+
+      // Catat setiap kategori yang ketemu di file, terlepas nanti diproses atau di-skip,
+      // supaya kelihatan jelas kategori apa aja yang ada di file dan mana yang didukung sistem.
+      const catLabel = mapped.kategori_perangkat || '(Tanpa Kategori)';
+      const isSupported = !!CATEGORY_MAP[normalizeHeader(catLabel)];
+      if (!categoryBreakdown[catLabel]) {
+        categoryBreakdown[catLabel] = { total: 0, supported: isSupported };
+      }
+      categoryBreakdown[catLabel].total += 1;
 
       // Cuma proses jadwal Bulanan
       if (mapped.keterangan !== 'Bulanan') {
@@ -206,10 +216,29 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
       inserted_count: insertedCount,
       unmatched_count: unmatched.length,
       unmatched,
+      category_breakdown: categoryBreakdown,
     });
   } catch (err) {
     console.error('Upload schedule error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server saat memproses file.' });
+  }
+});
+
+// DELETE /api/v1/schedules?period_key=2026-07 — hapus semua jadwal yang sudah
+// diupload untuk 1 periode (khusus admin, buat benerin salah upload/duplikat).
+// Tidak menghapus asset atau checklist, cuma baris di pm_schedules.
+router.delete('/', authorize('admin'), async (req, res) => {
+  const periodKey = req.query.period_key;
+  if (!periodKey) {
+    return res.status(400).json({ message: 'period_key wajib diisi.' });
+  }
+
+  try {
+    const result = await pool.query('DELETE FROM pm_schedules WHERE period_key = $1', [periodKey]);
+    res.json({ period_key: periodKey, deleted_count: result.rowCount });
+  } catch (err) {
+    console.error('Delete schedule error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
   }
 });
 

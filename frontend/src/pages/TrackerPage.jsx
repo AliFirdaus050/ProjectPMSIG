@@ -80,7 +80,7 @@ export default function TrackerPage() {
           <thead className="bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
             <tr>
               <th className="text-left p-3">Device</th>
-              <th className="text-left p-3">Asset Tag</th>
+              <th className="text-left p-3">Serial Number Tag</th>
               <th className="text-left p-3">Site</th>
               <th className="text-left p-3">Teknisi</th>
               <th className="text-left p-3">Status</th>
@@ -98,7 +98,7 @@ export default function TrackerPage() {
                 return (
                   <tr key={row.asset_id} className="border-t border-gray-100 dark:border-slate-700 text-gray-800 dark:text-gray-200">
                     <td className="p-3">{row.asset_name}</td>
-                    <td className="p-3">{row.asset_tag}</td>
+                    <td className="p-3">{row.serial_number}</td>
                     <td className="p-3">{row.site}</td>
                     <td className="p-3">{row.technician_name || '-'}</td>
                     <td className="p-3">
