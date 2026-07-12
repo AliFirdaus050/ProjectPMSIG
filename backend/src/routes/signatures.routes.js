@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 router.use(authenticate);
@@ -40,6 +41,14 @@ router.put('/me', async (req, res) => {
       [req.user.id, signature_data]
     );
     res.json(result.rows[0]);
+
+    logActivity({
+      userId: req.user.id,
+      action: 'signature.save',
+      entityType: 'signature',
+      description: 'Menyimpan/memperbarui tanda tangan profil.',
+      req,
+    });
   } catch (err) {
     console.error('Save signature error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });

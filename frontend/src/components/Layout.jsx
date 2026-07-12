@@ -15,6 +15,7 @@ function useNavLinks(role) {
     { to: '/history', label: 'History', show: role === 'teknisi' || role === 'admin' },
     { to: '/devices', label: 'Database', show: role === 'teknisi' || role === 'spv' || role === 'admin' },
     { to: '/users', label: 'Manage User', show: role === 'admin' },
+    { to: '/logs', label: 'Log Aktivitas', show: role === 'admin' },
   ];
   return links.filter((l) => l.show);
 }

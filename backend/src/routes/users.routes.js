@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 router.use(authenticate);
@@ -44,6 +45,15 @@ router.post('/', async (req, res) => {
       [full_name.trim(), email.trim().toLowerCase(), passwordHash, role]
     );
     res.status(201).json(result.rows[0]);
+
+    logActivity({
+      userId: req.user.id,
+      action: 'user.create',
+      entityType: 'user',
+      entityId: result.rows[0].id,
+      description: `Membuat akun baru: ${full_name.trim()} (${role}).`,
+      req,
+    });
   } catch (err) {
     if (err.code === '23505') { // unique_violation (email sudah dipakai)
       return res.status(409).json({ message: 'Email sudah terdaftar.' });
@@ -77,6 +87,16 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan.' });
     }
     res.json(result.rows[0]);
+
+    logActivity({
+      userId: req.user.id,
+      action: 'user.update',
+      entityType: 'user',
+      entityId: req.params.id,
+      description: `Mengubah data akun: ${result.rows[0].full_name}.`,
+      metadata: req.body,
+      req,
+    });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ message: 'Email sudah dipakai user lain.' });
@@ -103,6 +123,15 @@ router.post('/:id/reset-password', async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan.' });
     }
     res.json({ message: 'Password berhasil direset.' });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'user.reset_password',
+      entityType: 'user',
+      entityId: req.params.id,
+      description: `Reset password untuk user ID ${req.params.id}.`,
+      req,
+    });
   } catch (err) {
     console.error('Reset password error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });

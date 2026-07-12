@@ -7,6 +7,7 @@ const { buildSwitchChecklistHtml } = require('../templates/switchChecklistTempla
 const { buildPrinterChecklistHtml } = require('../templates/printerChecklistTemplate');
 const { generateChecklistPdf } = require('../services/pdfGenerator');
 const { getPeriodForDate } = require('../utils/period');
+const { logActivity } = require('../utils/activityLog');
 
 function getTemplateBuilder(assetName) {
   const builders = {
@@ -99,6 +100,15 @@ router.post('/', async (req, res) => {
     );
 
     res.status(201).json(result.rows[0]);
+
+    logActivity({
+      userId: req.user.id,
+      action: 'checklist.create',
+      entityType: 'checklist',
+      entityId: result.rows[0].id,
+      description: `Memulai checklist PM baru untuk ${asset_name} (periode ${periodKey}).`,
+      req,
+    });
   } catch (err) {
     console.error('Create checklist error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
@@ -297,6 +307,15 @@ router.post('/:id/generate-pdf', async (req, res) => {
       status: 'completed',
       pdf_url: updateResult.rows[0].pdf_path,
     });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'checklist.generate_pdf',
+      entityType: 'checklist',
+      entityId: id,
+      description: `Menyelesaikan checklist & generate PDF untuk ${checklist.asset_name} (SN: ${checklist.serial_number}).`,
+      req,
+    });
   } catch (err) {
     console.error('Generate PDF error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
@@ -359,6 +378,14 @@ router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
       pdf_url: updateResult.rows[0].pdf_path,
     });
 
+    logActivity({
+      userId: req.user.id,
+      action: 'checklist.approve',
+      entityType: 'checklist',
+      entityId: id,
+      description: `Approve checklist untuk ${checklistForPdf.asset_name} (SN: ${checklistForPdf.serial_number}).`,
+      req,
+    });
   } catch (err) {
     console.error('Approve checklist error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });

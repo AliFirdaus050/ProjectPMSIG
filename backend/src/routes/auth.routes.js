@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 
@@ -39,6 +40,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
     );
 
+    logActivity({
+      userId: user.id,
+      action: 'auth.login',
+      description: `${user.full_name} login ke sistem.`,
+      req,
+    });
+
     res.json({
       token,
       user: {
@@ -60,6 +68,7 @@ router.post('/login', async (req, res) => {
 // tempat konsisten untuk memicu proses logout & bisa dikembangkan (misal token
 // blacklist) kalau nanti dibutuhkan.
 router.post('/logout', authenticate, (req, res) => {
+  logActivity({ userId: req.user.id, action: 'auth.logout', description: 'User logout dari sistem.', req });
   res.json({ message: 'Logout berhasil. Hapus token di sisi client.' });
 });
 

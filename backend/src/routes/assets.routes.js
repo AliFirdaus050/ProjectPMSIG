@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 router.use(authenticate);
@@ -65,6 +66,15 @@ router.post('/', async (req, res) => {
     );
 
     res.status(201).json({ data: result.rows[0], duplicate_warning: duplicateWarning });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'asset.create',
+      entityType: 'asset',
+      entityId: result.rows[0].id,
+      description: `Mendaftarkan aset baru: ${asset_name.trim()} - ${asset_tag.trim()} (SN: ${normalizedSerial}).`,
+      req,
+    });
   } catch (err) {
     console.error('Create asset error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
@@ -149,6 +159,16 @@ router.patch('/:id', authorize('teknisi', 'spv', 'admin'), async (req, res) => {
       return res.status(404).json({ message: 'Aset tidak ditemukan.' });
     }
     res.json(result.rows[0]);
+
+    logActivity({
+      userId: req.user.id,
+      action: 'asset.update',
+      entityType: 'asset',
+      entityId: req.params.id,
+      description: `Mengubah data aset: ${result.rows[0].asset_name} - ${result.rows[0].asset_tag}.`,
+      metadata: req.body,
+      req,
+    });
   } catch (err) {
     console.error('Update asset error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
@@ -175,6 +195,15 @@ router.delete('/:id', authorize('teknisi', 'spv', 'admin'), async (req, res) => 
 
     await client.query('COMMIT');
     res.json({ message: 'Aset dan seluruh riwayat terkait berhasil dihapus.' });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'asset.delete',
+      entityType: 'asset',
+      entityId: req.params.id,
+      description: `Menghapus aset (ID: ${req.params.id}) beserta seluruh riwayat checklist & jadwal terkait.`,
+      req,
+    });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Delete asset error:', err.message);

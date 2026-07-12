@@ -3,6 +3,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 const { getPeriodForDate, getNextPeriod, getPeriodsList, formatPeriodLabel } = require('../utils/period');
 
 const router = express.Router();
@@ -218,6 +219,15 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
       unmatched,
       category_breakdown: categoryBreakdown,
     });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'schedule.upload',
+      entityType: 'schedule',
+      description: `Upload jadwal periode ${periodKey}: ${insertedCount} device masuk, ${unmatched.length} tidak cocok.`,
+      metadata: { period_key: periodKey, inserted_count: insertedCount, unmatched_count: unmatched.length },
+      req,
+    });
   } catch (err) {
     console.error('Upload schedule error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server saat memproses file.' });
@@ -236,6 +246,14 @@ router.delete('/', authorize('admin'), async (req, res) => {
   try {
     const result = await pool.query('DELETE FROM pm_schedules WHERE period_key = $1', [periodKey]);
     res.json({ period_key: periodKey, deleted_count: result.rowCount });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'schedule.delete',
+      entityType: 'schedule',
+      description: `Menghapus semua jadwal periode ${periodKey} (${result.rowCount} baris).`,
+      req,
+    });
   } catch (err) {
     console.error('Delete schedule error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });

@@ -13,6 +13,7 @@ import TrackerPage from './pages/TrackerPage';
 import AssetDatabasePage from './pages/AssetDatabasePage';
 import ScheduleUploadPage from './pages/ScheduleUploadPage';
 import ProfilePage from './pages/ProfilePage';
+import ActivityLogPage from './pages/ActivityLogPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/devices" element={<ProtectedRoute><AssetDatabasePage /></ProtectedRoute>} />
       <Route path="/upload-jadwal" element={<ProtectedRoute><ScheduleUploadPage /></ProtectedRoute>} />
       <Route path="/profile" element={<SpvRoute><ProfilePage /></SpvRoute>} />
+      <Route path="/logs" element={<AdminRoute><ActivityLogPage /></AdminRoute>} />
     </Routes>
   );
 }

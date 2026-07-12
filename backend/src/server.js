@@ -9,6 +9,7 @@ const checklistsRoutes = require('./routes/checklists.routes');
 const schedulesRoutes = require('./routes/schedules.routes');
 const signaturesRoutes = require('./routes/signatures.routes');
 const usersRoutes = require('./routes/users.routes');
+const logsRoutes = require('./routes/logs.routes');
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,7 @@ app.use('/api/v1/checklists', checklistsRoutes);
 app.use('/api/v1/schedules', schedulesRoutes);
 app.use('/api/v1/signatures', signaturesRoutes);
 app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/logs', logsRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
