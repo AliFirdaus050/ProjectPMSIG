@@ -25,37 +25,40 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-8 w-full max-w-sm">
-        <h1 className="text-xl font-semibold text-gray-900 mb-1">PM Checklist</h1>
-        <p className="text-gray-500 text-sm mb-6">IT Site Operation — Login</p>
+    <div className="min-h-screen bg-navy flex items-center justify-center px-margin-mobile">
+      <form onSubmit={handleSubmit} className="bg-surface-container-lowest shadow-lg rounded-lg p-8 w-full max-w-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="material-symbols-outlined text-primary text-2xl">checklist</span>
+          <h1 className="font-headline-md text-headline-md text-on-surface">PM Checklist</h1>
+        </div>
+        <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">IT Site Operation — Login</p>
 
         {error && (
-          <div className="bg-red-50 text-red-600 text-sm rounded p-2 mb-4">{error}</div>
+          <div className="bg-red-50 text-red-600 font-body-sm text-body-sm rounded p-2 mb-4">{error}</div>
         )}
 
-        <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+        <label className="block font-label-md text-label-md text-on-surface-variant mb-1">Email</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-sm"
+          className="w-full h-10 px-3 border border-[#CBD5E1] rounded font-body-md text-on-surface mb-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
 
-        <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
+        <label className="block font-label-md text-label-md text-on-surface-variant mb-1">Password</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-6 text-sm"
+          className="w-full h-10 px-3 border border-[#CBD5E1] rounded font-body-md text-on-surface mb-6 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary hover:bg-primary-dark text-white rounded py-2 text-sm font-medium disabled:opacity-50"
+          className="w-full h-11 bg-primary hover:bg-primary-dark text-white font-label-md text-label-md rounded disabled:opacity-50 transition-colors"
         >
           {loading ? 'Memproses...' : 'Login'}
         </button>
