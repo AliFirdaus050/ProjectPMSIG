@@ -103,12 +103,12 @@ export default function HistoryPage() {
 
       <div className="bg-surface dark:bg-slate-800 border border-outline-variant dark:border-slate-700 rounded overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
         <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface-container-low dark:bg-slate-800 border-b border-outline-variant dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
-          <div className="col-span-2">Tanggal</div>
-          <div className="col-span-2">Device</div>
-          <div className="col-span-2">Asset Tag</div>
+          <div className="col-span-1">Tanggal</div>
+          <div className="col-span-1">Device</div>
+          <div className="col-span-3">Asset Tag</div>
           <div className="col-span-2">Serial Number</div>
-          <div className="col-span-1">Site</div>
-          <div className="col-span-2">Status</div>
+          <div className="col-span-3">Site</div>
+          <div className="col-span-1">Status</div>
           <div className="col-span-1 text-right">PDF</div>
         </div>
         <div className="flex flex-col divide-y divide-outline-variant dark:divide-slate-700">
@@ -124,12 +124,14 @@ export default function HistoryPage() {
                   i % 2 === 1 ? 'bg-[#F1F5F9] dark:bg-slate-800/60' : 'bg-surface dark:bg-slate-800'
                 }`}
               >
-                <div className="md:col-span-2 font-body-sm text-body-sm text-on-surface dark:text-gray-200">{c.checklist_date}</div>
-                <div className="md:col-span-2 font-body-sm text-body-sm text-on-surface dark:text-gray-100 font-semibold">{c.asset_name}</div>
-                <div className="md:col-span-2 font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{c.asset_tag}</div>
+                <div className="md:col-span-1 font-body-sm text-body-sm text-on-surface dark:text-gray-200">
+                  {c.checklist_date ? new Date(c.checklist_date).toLocaleDateString('id-ID') : '-'}
+                </div>
+                <div className="md:col-span-1 font-body-sm text-body-sm text-on-surface dark:text-gray-100 font-semibold">{c.asset_name}</div>
+                <div className="md:col-span-3 font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{c.asset_tag}</div>
                 <div className="md:col-span-2 font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{c.serial_number}</div>
-                <div className="md:col-span-1 font-body-sm text-body-sm text-on-surface dark:text-gray-300">{c.site}</div>
-                <div className="md:col-span-2">
+                <div className="md:col-span-3 font-body-sm text-body-sm text-on-surface dark:text-gray-300">{c.site}</div>
+                <div className="md:col-span-1">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-label-md text-[10px] uppercase tracking-wider ${
                     c.status === 'completed'
                       ? 'bg-status-normal/10 text-status-normal'

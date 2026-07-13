@@ -453,8 +453,8 @@ router.get('/', async (req, res) => {
   }
 
   if (site) {
-    values.push(site);
-    conditions.push(`a.site = $${values.length}`);
+    values.push(`%${site}%`);
+    conditions.push(`a.detail_location ILIKE $${values.length}`);
   }
   if (serial_number) {
     values.push(serial_number.trim().toUpperCase());
@@ -478,7 +478,7 @@ router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT pc.id, pc.checklist_date, pc.status, pc.pdf_path,
-              a.asset_name, a.asset_tag, a.serial_number, a.site
+              a.asset_name, a.asset_tag, a.serial_number, a.detail_location AS site
        FROM pm_checklists pc
        JOIN assets a ON pc.asset_id = a.id
        ${whereClause}

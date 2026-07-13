@@ -80,11 +80,11 @@ export default function TrackerPage() {
 
       <div className="bg-surface dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded overflow-hidden shadow-sm">
         <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
-          <div className="col-span-3">Device</div>
+          <div className="col-span-2">Device</div>
           <div className="col-span-2">Serial Number</div>
-          <div className="col-span-2">Site</div>
-          <div className="col-span-1">Teknisi</div>
-          <div className="col-span-2">Status</div>
+          <div className="col-span-3">Lokasi</div>
+          <div className="col-span-2">Teknisi</div>
+          <div className="col-span-1">Status</div>
           <div className="col-span-2 text-right">Aksi</div>
         </div>
 
@@ -101,11 +101,11 @@ export default function TrackerPage() {
               return (
                 <div
                   key={row.asset_id}
-                  className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 md:py-0 md:h-10 items-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                  className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 md:py-2 md:min-h-10 items-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
                     i % 2 === 1 ? 'bg-[#F1F5F9] dark:bg-slate-800/60' : 'bg-surface dark:bg-slate-800'
                   }`}
                 >
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Device:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-100 font-semibold">{row.asset_name}</span>
                   </div>
@@ -113,15 +113,15 @@ export default function TrackerPage() {
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Serial:</span>
                     <span className="font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{row.serial_number}</span>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Site:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.site}</span>
                   </div>
-                  <div className="md:col-span-1">
+                  <div className="md:col-span-2">
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Teknisi:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.technician_name || '-'}</span>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-1">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-label-md text-[10px] tracking-wider uppercase ${statusInfo.className}`}>
                       {statusInfo.label}
                     </span>
