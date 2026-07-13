@@ -11,11 +11,29 @@ const STATUS_CONFIG = {
 
 export default function TrackerPage() {
   const { user } = useAuth();
+  const [periods, setPeriods] = useState([]);
   const [periodKey, setPeriodKey] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [approvingId, setApprovingId] = useState(null);
+
+  // Fetch daftar periode dari endpoint yang sama kayak Upload Jadwal
+  useEffect(() => {
+    api.get('/schedules/periods')
+      .then((data) => {
+        setPeriods(data);
+        // Default ke periode pertama (periode berjalan sekarang)
+        if (data.length > 0) {
+          setPeriodKey(data[0].period_key);
+          load(data[0].period_key);
+        }
+      })
+      .catch(() => {
+        // Kalau fetch periods gagal, tetap load tracker (pakai periode default backend)
+        load();
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load(period) {
     setLoading(true);
@@ -32,13 +50,6 @@ export default function TrackerPage() {
     }
   }
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handlePeriodSubmit(e) {
-    e.preventDefault();
-    load(periodKey);
-  }
-
   async function handleApprove(checklistId) {
     setError('');
     setApprovingId(checklistId);
@@ -52,6 +63,8 @@ export default function TrackerPage() {
     }
   }
 
+  const currentPeriodInfo = periods.find((p) => p.period_key === periodKey);
+
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-comfortable md:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -63,17 +76,28 @@ export default function TrackerPage() {
               : 'Status PM seluruh device pada periode berjalan.'}
           </p>
         </div>
-        <form onSubmit={handlePeriodSubmit} className="flex gap-2">
-          <input
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <select
             value={periodKey}
-            onChange={(e) => setPeriodKey(e.target.value)}
-            placeholder="YYYY-MM"
-            className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-100 font-body-sm text-body-sm rounded h-8 px-3 w-32 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-          />
-          <button type="submit" className="bg-primary hover:bg-primary-dark text-white font-body-sm text-body-sm font-medium h-8 px-4 rounded">
-            Tampilkan
-          </button>
-        </form>
+            onChange={(e) => { setPeriodKey(e.target.value); load(e.target.value); }}
+            className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-100 font-body-sm text-body-sm rounded h-9 px-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          >
+            {periods.length === 0 && (
+              <option value={periodKey}>{periodKey || 'Memuat...'}</option>
+            )}
+            {periods.map((p) => (
+              <option key={p.period_key} value={p.period_key}>
+                {p.label} {p.has_schedule ? `(${p.device_count} device)` : '(belum ada jadwal)'}
+              </option>
+            ))}
+          </select>
+          {currentPeriodInfo && (
+            <span className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400 whitespace-nowrap">
+              {new Date(currentPeriodInfo.start_date).toLocaleDateString('id-ID')} –{' '}
+              {new Date(currentPeriodInfo.end_date).toLocaleDateString('id-ID')}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
@@ -82,7 +106,7 @@ export default function TrackerPage() {
         <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
           <div className="col-span-2">Device</div>
           <div className="col-span-2">Serial Number</div>
-          <div className="col-span-3">Lokasi</div>
+          <div className="col-span-3">Site</div>
           <div className="col-span-2">Teknisi</div>
           <div className="col-span-1">Status</div>
           <div className="col-span-2 text-right">Aksi</div>

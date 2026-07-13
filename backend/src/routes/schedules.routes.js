@@ -61,8 +61,19 @@ router.get('/periods', async (req, res) => {
 // Kategori di luar daftar ini (Perangkat Vicon, UPS, dll) diabaikan/skip.
 const CATEGORY_MAP = {
   'desktop komputer / laptop': 'PC/Laptop',
+  'desktop komputer/laptop': 'PC/Laptop',
+  'desktop komputer': 'PC/Laptop',
+  'komputer / laptop': 'PC/Laptop',
+  'komputer/laptop': 'PC/Laptop',
+  'komputer': 'PC/Laptop',
+  'laptop': 'PC/Laptop',
+  'pc/laptop': 'PC/Laptop',
+  'pc / laptop': 'PC/Laptop',
+  'pc': 'PC/Laptop',
+  // variasi Printer
   'printer': 'Printer',
-  'switch': 'Switch',
+  // variasi Switch
+  'switch': 'Switch'
 };
 
 // POST /api/v1/schedules/upload — upload jadwal PM
