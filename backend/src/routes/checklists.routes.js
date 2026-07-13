@@ -92,6 +92,19 @@ router.post('/', async (req, res) => {
     );
     const scheduledPicName = scheduleResult.rows[0]?.pic_name || null;
 
+    const existingDraft = await pool.query(
+        `SELECT * FROM pm_checklists
+        WHERE asset_id = $1 AND period_key = $2 AND status = 'draft'
+        ORDER BY created_at DESC
+        LIMIT 1`,
+        [asset_id, periodKey]
+    );
+
+    if (existingDraft.rows.length > 0) {
+        // udah ada draft aktif, langsung kembalikan itu, jangan bikin baris baru
+        return res.status(200).json({ data: existingDraft.rows[0], resumed: true });
+    }
+
     const result = await pool.query(
       `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note, period_key, pic_user_id, pic_name)
        VALUES ($1, $2, 'draft', $3, $4, $5, $6)
@@ -300,6 +313,15 @@ router.post('/:id/generate-pdf', async (req, res) => {
     const updateResult = await pool.query(
       `UPDATE pm_checklists SET status = 'completed', pdf_path = $1, updated_at = now() WHERE id = $2 RETURNING *`,
       [publicPath, id]
+    );
+
+    await pool.query(
+        `DELETE FROM pm_checklists
+        WHERE asset_id = $1
+            AND period_key = $2
+            AND status = 'draft'
+            AND id != $3`,
+        [checklist.asset_id, checklist.period_key, id]
     );
 
     res.json({

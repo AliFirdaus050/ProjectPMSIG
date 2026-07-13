@@ -3,9 +3,6 @@
 //const API_BASE = 'http://localhost:4000/api/v1';
 const API_BASE = '/api/v1';
 
-
-
-
 // const API_BASE = 'http://10.6.169.107:4000/api/v1';
 
 async function request(path, options = {}) {

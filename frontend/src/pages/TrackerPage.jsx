@@ -104,12 +104,13 @@ export default function TrackerPage() {
 
       <div className="bg-surface dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded overflow-hidden shadow-sm">
         <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
-          <div className="col-span-2">Device</div>
-          <div className="col-span-2">Serial Number</div>
-          <div className="col-span-3">Site</div>
-          <div className="col-span-2">Teknisi</div>
-          <div className="col-span-1">Status</div>
-          <div className="col-span-2 text-right">Aksi</div>
+            <div className="col-span-2">Device</div>
+            <div className="col-span-2">Serial Number</div>
+            <div className="col-span-2">Perangkat</div>
+            <div className="col-span-3">Lokasi</div>
+            <div className="col-span-1">Teknisi</div>
+            <div className="col-span-1">Status</div>
+            <div className="col-span-1 text-right">Aksi</div>
         </div>
 
         <div className="flex flex-col divide-y divide-[#E2E8F0] dark:divide-slate-700">
@@ -137,11 +138,15 @@ export default function TrackerPage() {
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Serial:</span>
                     <span className="font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{row.serial_number}</span>
                   </div>
+                  <div className="md:col-span-2">
+                    <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Perangkat:</span>
+                    <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.model || '-'}</span>
+                  </div>
                   <div className="md:col-span-3">
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Site:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.site}</span>
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-1">
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Teknisi:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.technician_name || '-'}</span>
                   </div>
@@ -150,7 +155,7 @@ export default function TrackerPage() {
                       {statusInfo.label}
                     </span>
                   </div>
-                  <div className="md:col-span-2 flex items-center gap-2 md:justify-end">
+                  <div className="md:col-span-1 flex items-center gap-2 md:justify-end">
                     {row.tracker_status === 'pending_approval' && user?.role === 'spv' && (
                       <button
                         onClick={() => handleApprove(row.checklist_id)}
