@@ -313,7 +313,7 @@ router.get('/tracker', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT a.id AS asset_id, a.asset_name, a.asset_tag, a.serial_number, a.site,
+      `SELECT a.id AS asset_id, a.asset_name, a.asset_tag, a.serial_number, a.detail_location AS site,
               pc.id AS checklist_id, pc.status, pc.checklist_date, pc.spv_approved_at,
               tech.full_name AS technician_name
        FROM pm_schedules ps
