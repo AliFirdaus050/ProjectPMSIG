@@ -1,0 +1,1 @@
+ALTER TABLE assets ADD COLUMN kategori VARCHAR(50);

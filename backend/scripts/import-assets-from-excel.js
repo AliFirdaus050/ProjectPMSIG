@@ -40,6 +40,7 @@ const COLUMN_MAP = {
   serial: 'serial_number',
   hostname: 'hostname',
   'detail location': 'detail_location',
+  kategori: 'kategori',
   // kolom "no" dan "kategori" (standar) sengaja tidak dipetakan -> diabaikan
 };
 
@@ -95,6 +96,7 @@ function mapRowToAsset(row) {
     serial_number: normalizeSerial(mapped.serial_number),
     model: mapped.model,
     category: mapped.category,
+    kategori: mapped.kategori || null, // Standar / VIP
     hostname: mapped.hostname ? mapped.hostname : null,
     site: SITE_DEFAULT,
     detail_location: mapped.detail_location || null,
@@ -109,8 +111,8 @@ async function checkDuplicateAssetTag(client, assetTag) {
 async function insertAsset(client, asset) {
   const result = await client.query(
     `INSERT INTO assets
-      (asset_name, asset_tag, serial_number, model, category, hostname, site, detail_location, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+      (asset_name, asset_tag, serial_number, model, category, kategori, hostname, site, detail_location, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
      RETURNING id`,
     [
       asset.asset_name,
@@ -118,6 +120,7 @@ async function insertAsset(client, asset) {
       asset.serial_number,
       asset.model,
       asset.category,
+      asset.kategori,
       asset.hostname,
       asset.site,
       asset.detail_location,
