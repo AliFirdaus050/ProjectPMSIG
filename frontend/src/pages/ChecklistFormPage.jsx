@@ -210,7 +210,7 @@ export default function ChecklistFormPage() {
             <p><span className="text-gray-500 dark:text-gray-400">Merk/Type:</span> {checklist.model}</p>
             <p><span className="text-gray-500 dark:text-gray-400">Serial Number:</span> {checklist.serial_number}</p>
             <p><span className="text-gray-500 dark:text-gray-400">Location:</span> {checklist.detail_location}</p>
-            <p><span className="text-gray-500 dark:text-gray-400">Date:</span> {checklist.checklist_date}</p>
+            <p><span className="text-gray-500 dark:text-gray-400">Date:</span> {checklist.checklist_date ? new Date(checklist.checklist_date).toLocaleDateString('id-ID') : '-'}</p>
 
             {lastSaved && (
               <p className="text-xs text-status-normal mt-3">
