@@ -244,7 +244,7 @@ export default function UserManagementPage() {
             ) : (
               picAssets.map((a) => (
                 <div key={a.asset_id} className="flex justify-between items-center bg-gray-50 dark:bg-slate-700 rounded p-2 text-sm">
-                  <span>{a.asset_name} — {a.asset_tag} ({a.site})</span>
+                  <span>{a.asset_name} - {a.asset_tag} ({a.site})</span>
                   <button onClick={() => unassignAsset(a.asset_id)} className="text-status-error text-xs underline">Hapus</button>
                 </div>
               ))
@@ -265,7 +265,7 @@ export default function UserManagementPage() {
             <div className="mt-2 space-y-1">
               {assetSearchResult.map((a) => (
                 <div key={a.id} className="flex justify-between items-center bg-gray-50 dark:bg-slate-700 rounded p-2 text-sm">
-                  <span>{a.asset_name} — {a.asset_tag}</span>
+                  <span>{a.asset_name} - {a.asset_tag}</span>
                   <button onClick={() => assignAsset(a.id)} className="text-primary dark:text-blue-300 text-xs underline">Assign</button>
                 </div>
               ))}

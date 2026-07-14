@@ -8,7 +8,7 @@ const ROLE_LABELS = {
   pic: 'PIC',
 };
 
-// Logic asli dipertahankan 100% — cuma nambah `icon` & `badge` (opsional)
+// Logic asli dipertahankan 100% - cuma nambah `icon` & `badge` (opsional)
 // buat tampilan, gak ngubah field `roles` yang menentukan siapa lihat apa.
 const ALL_MENUS = [
   { path: '/checklist-baru', label: 'Checklist Baru', description: 'Cari serial number & isi checklist PM', roles: ['teknisi'], icon: 'checklist', badge: 'ACTION', badgeClass: 'bg-blue-100 text-blue-700' },
@@ -33,7 +33,7 @@ export default function HomePage() {
           Selamat datang, {user?.full_name}
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant dark:text-gray-400">
-          {ROLE_LABELS[user?.role] || user?.role} — PM Checklist App, IT Site Operation SIG
+          {ROLE_LABELS[user?.role] || user?.role} - PM Checklist. Unit of Tech, Asset & Site Operations
         </p>
       </div>
 

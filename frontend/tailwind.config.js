@@ -8,7 +8,7 @@ export default {
         // primary & status dipertahankan namanya (dipakai di banyak halaman lain),
         // nilainya disesuaikan ke tema baru "Industrial SaaS" dari Stitch.
         primary: {
-          DEFAULT: '#2563eb', // Cobalt — tombol aksi utama, link aktif
+          DEFAULT: '#2563eb', // Cobalt tombol aksi utama, link aktif
           dark: '#1d4ed8', // hover state
         },
         status: {

@@ -31,7 +31,7 @@ export default function LoginPage() {
           <span className="material-symbols-outlined text-primary text-2xl">checklist</span>
           <h1 className="font-headline-md text-headline-md text-on-surface">PM Checklist</h1>
         </div>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">IT Site Operation — Login</p>
+        <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">Unit of Tech, Asset & Site Operations</p>
 
         {error && (
           <div className="bg-red-50 text-red-600 font-body-sm text-body-sm rounded p-2 mb-4">{error}</div>
