@@ -103,19 +103,25 @@ router.get('/', async (req, res) => {
   const search = req.query.search ? `%${req.query.search.trim()}%` : null;
 
   try {
-    const whereClause = search
-      ? `WHERE asset_name ILIKE $3 OR asset_tag ILIKE $3 OR serial_number ILIKE $3 OR model ILIKE $3`
+    const whereData = search
+      ? `WHERE asset_name ILIKE $3::text OR asset_tag ILIKE $3::text OR serial_number ILIKE $3::text OR model ILIKE $3::text`
       : '';
-    const params = search ? [limit, offset, search] : [limit, offset];
+      
+    const whereCount = search
+      ? `WHERE asset_name ILIKE $1::text OR asset_tag ILIKE $1::text OR serial_number ILIKE $1::text OR model ILIKE $1::text`
+      : '';
+
+    const paramsData = search ? [limit, offset, search] : [limit, offset];
+    const paramsCount = search ? [search] : [];
 
     const [dataResult, countResult] = await Promise.all([
       pool.query(
-        `SELECT * FROM assets ${whereClause} ORDER BY asset_name, asset_tag LIMIT $1 OFFSET $2`,
-        params
+        `SELECT * FROM assets ${whereData} ORDER BY asset_name, asset_tag LIMIT $1 OFFSET $2`,
+        paramsData
       ),
       pool.query(
-        `SELECT COUNT(*) FROM assets ${whereClause}`,
-        search ? [search] : []
+        `SELECT COUNT(*) FROM assets ${whereCount}`,
+        paramsCount
       ),
     ]);
 

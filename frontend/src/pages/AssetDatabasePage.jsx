@@ -18,7 +18,8 @@ const inputClass =
 // Helper component: Truncate HANYA di desktop (md:), di HP teks akan utuh/wrap
 const TableCell = ({ value, className = '' }) => (
   <td 
-    className={`py-2 px-2 text-xs text-on-surface-variant dark:text-gray-300 md:truncate md:max-w-0 ${className}`} 
+    // Hapus md:truncate dan md:max-w-0 di sini
+    className={`py-2 px-2 text-xs text-on-surface-variant dark:text-gray-300 break-words ${className}`} 
     title={value || '-'}
   >
     {value || '-'}
@@ -186,16 +187,16 @@ export default function AssetDatabasePage() {
         <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0 table-auto md:table-fixed">
           <thead>
             <tr className="border-b border-outline-variant dark:border-slate-700 bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-gray-400 text-xs">
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[5%] text-center">No</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[15%]">Asset Name</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[10%]">Asset Tag</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[12%]">Model</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[10%]">Category</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[12%]">Serial</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[10%]">Hostname</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[10%]">Kategori</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[12%]">Detail Location</th>
-              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[4%] text-center">Aksi</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[4%] text-center">No</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[9%]">Asset Name</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[18%]">Asset Tag</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[11%]">Model</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[9%]">Category</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[11%]">Serial</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[11%]">Hostname</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[7%]">Kategori</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[14%]">Detail Location</th>
+              <th className="py-3 px-2 font-label-md uppercase tracking-wider w-auto md:w-[6%] text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="font-body-sm text-xs divide-y divide-outline-variant dark:divide-slate-700">
