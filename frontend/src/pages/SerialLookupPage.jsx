@@ -138,15 +138,15 @@ export default function SerialLookupPage() {
           <div className="bg-surface-container-lowest dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded p-4 space-y-3">
             <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-300">
               {matches.length > 1
-                ? `Ditemukan ${matches.length} aset dengan serial number ini — pilih sesuai lokasi kunjungan:`
+                ? `Ditemukan ${matches.length} aset dengan serial number ini - pilih sesuai lokasi kunjungan:`
                 : 'Aset ditemukan:'}
             </p>
             {matches.map((asset) => (
               <div key={asset.id} className="bg-surface dark:bg-slate-700 rounded p-3 font-body-sm text-body-sm">
-                <p className="text-on-surface dark:text-gray-100"><strong>{asset.asset_name}</strong> — {asset.model}</p>
+                <p className="text-on-surface dark:text-gray-100"><strong>{asset.asset_name}</strong> - {asset.model}</p>
                 <p className="text-on-surface-variant dark:text-gray-400">Asset Tag: {asset.asset_tag}</p>
                 <p className="text-on-surface-variant dark:text-gray-400">
-                  Site: {asset.site} — {asset.detail_location}
+                  Site: {asset.site} - {asset.detail_location}
                 </p>
                 <button
                   onClick={() => startChecklist(asset.id)}

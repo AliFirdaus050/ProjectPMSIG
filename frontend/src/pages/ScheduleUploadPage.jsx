@@ -171,7 +171,7 @@ export default function ScheduleUploadPage() {
       {result && (
         <div className="bg-surface dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg p-margin-desktop mb-6">
           <h2 className="font-headline-sm text-headline-sm text-on-surface dark:text-gray-100 mb-3">
-            Hasil Upload — Periode {result.period_key}
+            Hasil Upload - Periode {result.period_key}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center mb-4">
             <div className="bg-surface-container-low dark:bg-slate-700 rounded p-3">
@@ -214,7 +214,7 @@ export default function ScheduleUploadPage() {
           {result.category_breakdown && (
             <div className="mt-4">
               <p className="font-body-sm text-body-sm text-on-surface-variant dark:text-gray-300 mb-2">
-                Rincian per kategori yang ditemukan di file (sistem ini cuma proses Switch, Printer, dan Desktop Komputer/Laptop — kategori lain otomatis diskip):
+                Rincian per kategori yang ditemukan di file (sistem ini cuma proses Switch, Printer, dan Desktop Komputer/Laptop - kategori lain otomatis diskip):
               </p>
               <div className="space-y-1">
                 {Object.entries(result.category_breakdown).map(([cat, info]) => (

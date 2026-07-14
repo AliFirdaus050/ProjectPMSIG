@@ -110,7 +110,11 @@ export default function TrackerPage() {
             <div className="col-span-3">Lokasi</div>
             <div className="col-span-1">Teknisi</div>
             <div className="col-span-2">Status</div>
+<<<<<<< HEAD
             <div className="col-span-1 text-mid">Aksi</div>
+=======
+            <div className="col-span-1 text-right">Aksi</div>
+>>>>>>> ffa97bf471dd90311ad4bde3dffa01d23634b8aa
         </div>
 
         <div className="flex flex-col divide-y divide-[#E2E8F0] dark:divide-slate-700">
@@ -150,7 +154,7 @@ export default function TrackerPage() {
                     <span className="md:hidden font-label-md text-label-md text-outline uppercase mr-2">Teknisi:</span>
                     <span className="font-body-sm text-body-sm text-on-surface dark:text-gray-300">{row.technician_name || '-'}</span>
                   </div>
-                  <div className="md:col-span-1">
+                  <div className="md:col-span-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-sm font-label-md text-[10px] tracking-wider uppercase ${statusInfo.className}`}>
                       {statusInfo.label}
                     </span>

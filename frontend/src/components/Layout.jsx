@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 // Daftar link nav didefinisikan sekali, dipakai ulang untuk versi desktop
-// (horizontal bar) dan mobile (menu hamburger) — supaya kondisi role selalu
+// (horizontal bar) dan mobile (menu hamburger) supaya kondisi role selalu
 // konsisten di kedua tempat tanpa duplikasi logic.
 function useNavLinks(role) {
   const links = [
@@ -44,7 +44,7 @@ export default function Layout({ children }) {
       <header className="bg-navy border-b border-outline-variant w-full">
         <div className="max-w-container-max mx-auto h-16 flex items-center justify-between px-margin-mobile md:px-margin-desktop">
           <div className="flex items-center gap-stack-comfortable">
-            {/* Hamburger — cuma muncul di mobile */}
+            {/* Hamburger - cuma muncul di mobile */}
             <button
               onClick={() => setMobileMenuOpen((v) => !v)}
               className="md:hidden text-white p-1 -ml-1"
@@ -57,7 +57,7 @@ export default function Layout({ children }) {
             </Link>
           </div>
 
-          {/* Nav horizontal — desktop only */}
+          {/* Nav horizontal - desktop only */}
           <nav className="hidden md:flex items-center gap-stack-comfortable h-full">
             {navLinks.map((link) => (
               <NavLink key={link.to} to={link.to} end={link.to === '/'} className={navLinkClass}>
