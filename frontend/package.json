@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "html5-qrcode": "^2.3.8",
+    "pdfjs-dist": "5.4.296",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.24.1",
-    "html5-qrcode": "^2.3.8",
-    "pdfjs-dist": "^4.6.82"
+    "react-pdf": "^10.4.1",
+    "react-router-dom": "^6.24.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

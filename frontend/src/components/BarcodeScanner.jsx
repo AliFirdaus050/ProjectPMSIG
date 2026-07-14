@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 // Scanner QR Code/Barcode pakai kamera (utamakan kamera belakang di HP).
@@ -6,6 +6,8 @@ import { Html5Qrcode } from 'html5-qrcode';
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
   const containerId = 'barcode-scanner-container';
+  const [zoomCapability, setZoomCapability] = useState(null); // { min, max, step } atau null kalau tidak didukung
+  const [zoomValue, setZoomValue] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,8 +30,21 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
     scanner
       .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          facingMode: 'environment',
+          // Minta resolusi setinggi mungkin ke kamera, supaya QR yang kecil
+          // di frame tetap punya cukup detail piksel untuk di-decode.
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          // Pakai BarcodeDetector native browser kalau device/browser support —
+          // biasanya lebih akurat & lebih cepat dibanding decoder JS bawaan,
+          // terutama untuk QR kecil/jauh.
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        },
         (decodedText) => {
           if (cancelled) return;
           onScan(decodedText);
@@ -37,6 +52,21 @@ export default function BarcodeScanner({ onScan, onClose }) {
         },
         () => {} // error callback per-frame, diabaikan (normal saat belum ketemu barcode)
       )
+      .then(() => {
+        if (cancelled) return;
+        // Cek apakah kamera yang aktif support hardware zoom. Tidak semua
+        // device/browser punya ini (khususnya iOS Safari sering tidak).
+        try {
+          const capabilities = scannerRef.current.getRunningTrackCapabilities();
+          if (capabilities && capabilities.zoom) {
+            const { min, max, step } = capabilities.zoom;
+            setZoomCapability({ min, max, step: step || 0.1 });
+            setZoomValue(min);
+          }
+        } catch (e) {
+          // Device tidak expose track capabilities, abaikan (zoom manual tidak muncul).
+        }
+      })
       .catch((err) => {
         if (!cancelled) console.error('Gagal memulai kamera:', err);
       });
@@ -47,6 +77,14 @@ export default function BarcodeScanner({ onScan, onClose }) {
     };
   }, [onScan]);
 
+  function handleZoomChange(e) {
+    const value = parseFloat(e.target.value);
+    setZoomValue(value);
+    scannerRef.current?.applyVideoConstraints({ advanced: [{ zoom: value }] }).catch(() => {
+      // Kalau gagal apply (device menolak di tengah jalan), abaikan saja.
+    });
+  }
+
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-800 rounded-lg p-4 w-full max-w-sm">
@@ -55,8 +93,25 @@ export default function BarcodeScanner({ onScan, onClose }) {
           <button onClick={onClose} className="text-gray-400 text-sm">Tutup</button>
         </div>
         <div id={containerId} className="w-full" style={{ minHeight: '280px' }} />
+
+        {zoomCapability && (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Zoom</span>
+            <input
+              type="range"
+              min={zoomCapability.min}
+              max={zoomCapability.max}
+              step={zoomCapability.step}
+              value={zoomValue}
+              onChange={handleZoomChange}
+              className="flex-1"
+            />
+          </div>
+        )}
+
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
           Arahkan kamera ke QR Code/Barcode pada aset.
+          {zoomCapability ? ' Geser slider zoom kalau QR terlalu kecil/jauh.' : ''}
         </p>
       </div>
     </div>
