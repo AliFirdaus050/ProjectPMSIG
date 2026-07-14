@@ -111,6 +111,7 @@ export default function HistoryPage() {
           <div className="col-span-1">Status</div>
           <div className="col-span-1 text-right">PDF</div>
         </div>
+
         <div className="flex flex-col divide-y divide-outline-variant dark:divide-slate-700">
           {loading ? (
             <div className="p-4 text-center font-body-sm text-body-sm text-on-surface-variant dark:text-gray-400">Memuat...</div>
@@ -120,13 +121,14 @@ export default function HistoryPage() {
             checklists.map((c, i) => (
               <div
                 key={c.id}
-                className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 md:py-0 md:h-10 items-center hover:bg-[#E2E8F0] dark:hover:bg-slate-700 transition-colors ${
+                className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-4 py-3 md:py-2 md:min-h-10 items-center hover:bg-[#E2E8F0] dark:hover:bg-slate-700 transition-colors ${
                   i % 2 === 1 ? 'bg-[#F1F5F9] dark:bg-slate-800/60' : 'bg-surface dark:bg-slate-800'
                 }`}
               >
                 <div className="md:col-span-1 font-body-sm text-body-sm text-on-surface dark:text-gray-200">
                   {c.checklist_date ? new Date(c.checklist_date).toLocaleDateString('id-ID') : '-'}
                 </div>
+
                 <div className="md:col-span-1 font-body-sm text-body-sm text-on-surface dark:text-gray-100 font-semibold">{c.asset_name}</div>
                 <div className="md:col-span-3 font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{c.asset_tag}</div>
                 <div className="md:col-span-2 font-data-mono text-data-mono text-on-surface-variant dark:text-gray-300">{c.serial_number}</div>
