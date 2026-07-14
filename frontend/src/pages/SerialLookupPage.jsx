@@ -57,7 +57,7 @@ export default function SerialLookupPage() {
     setError('');
     try {
       const checklist = await api.post('/checklists', { asset_id: assetId });
-      navigate(`/checklist/${checklist.data.id}`);
+      navigate(`/checklist/${checklist.id}`);
     } catch (err) {
       setError(err.message);
     }
