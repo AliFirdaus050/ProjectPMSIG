@@ -30,17 +30,11 @@ export default function ChecklistFormPage() {
   const [picSignature, setPicSignature] = useState('');
   const [picName, setPicName] = useState('');
 
-<<<<<<< HEAD
   // attachments: [{ cells: [{image, caption}, {image, caption}?] }] — lampiran foto opsional (halaman 2 PDF)
   const [attachments, setAttachments] = useState([]);
   const [attachmentsNote, setAttachmentsNote] = useState('');
-=======
-  // Tanda tangan Teknisi sekarang tidak digambar manual tiap kali — cukup
-  // tombol "Gunakan Tanda Tangan Tersimpan" yang ambil dari halaman Profil.
   const [savedSignature, setSavedSignature] = useState(null);
   const [savedSignatureLoading, setSavedSignatureLoading] = useState(true);
->>>>>>> 3f5ed53f1387c2f63e5a84dcff7e3b9da087e851
-
   const [lastSaved, setLastSaved] = useState(null);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);

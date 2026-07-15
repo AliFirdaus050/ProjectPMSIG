@@ -54,6 +54,9 @@ function TeknisiRoute({ children }) {
   if (loading) return <div className="p-8 text-gray-500 text-sm">Memuat...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'teknisi' && user.role !== 'admin') return <Navigate to="/" replace />;
+  return <Layout>{children}</Layout>;
+}
+
 function ProfileRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-8 text-gray-500 text-sm">Memuat...</div>;

@@ -102,13 +102,10 @@ router.post('/', async (req, res) => {
 
     if (existingDraft.rows.length > 0) {
         // udah ada draft aktif, langsung kembalikan itu, jangan bikin baris baru
-<<<<<<< HEAD
         // (bentuk response disamakan flat seperti create baru, supaya frontend
         // yang baca `checklist.id` langsung tetap bekerja di kedua kasus)
-        return res.status(200).json(existingDraft.rows[0]);
-=======
+        // return res.status(200).json(existingDraft.rows[0]);
         return res.status(200).json({ ...existingDraft.rows[0], resumed: true });
->>>>>>> 3f5ed53f1387c2f63e5a84dcff7e3b9da087e851
     }
 
     const result = await pool.query(
