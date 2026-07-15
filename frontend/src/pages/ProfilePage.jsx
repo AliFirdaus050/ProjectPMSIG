@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import SignaturePad from '../components/SignaturePad';
 
-// Halaman profil: tempat user (utamanya SPV) simpan tanda tangan sekali,
-// supaya otomatis kepakai tiap approve checklist tanpa perlu gambar ulang.
+// Halaman profil: tempat user simpan tanda tangan sekali, supaya otomatis
+// kepakai lagi tiap approve checklist (SPV) atau isi Formulir PM (Teknisi/Admin),
+// tanpa perlu gambar ulang tiap kali.
 export default function ProfilePage() {
   const [signature, setSignature] = useState('');
   const [loading, setLoading] = useState(true);
@@ -53,7 +54,8 @@ export default function ProfilePage() {
     <div className="max-w-lg mx-auto py-8 px-4">
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Profil Saya</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        Tanda tangan ini akan otomatis dipakai setiap approve checklist PM.
+        Tanda tangan ini akan otomatis dipakai lagi tiap kamu isi checklist PM
+        atau approve checklist (khusus SPV) — tinggal klik, tidak perlu gambar ulang.
       </p>
 
       {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
