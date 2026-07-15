@@ -3,87 +3,127 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 // Scanner QR Code/Barcode pakai kamera (utamakan kamera belakang di HP).
 // Serial Number langsung ada di dalam QR sesuai aset fisik (konfirmasi sebelumnya).
+//
+// Ada 2 mode:
+// 1. Live scan (default) — decode dari video stream real-time. Cepat, tapi
+//    resolusinya dibatasi oleh video preview (biasanya di-downscale demi
+//    frame-rate), jadi QR yang fisiknya sangat kecil bisa gagal kebaca.
+// 2. Ambil Foto (fallback) — buka kamera native HP lewat <input capture>,
+//    user bisa pinch-zoom OPTIK (bukan digital) sebelum jepret, lalu foto
+//    di-decode dari resolusi PENUH sensor kamera. Jauh lebih akurat untuk
+//    QR kecil dibanding live scan, walau langkahnya satu tap lebih banyak.
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
+  const fileInputRef = useRef(null);
   const containerId = 'barcode-scanner-container';
-  const [zoomCapability, setZoomCapability] = useState(null); // { min, max, step } atau null kalau tidak didukung
-  const [zoomValue, setZoomValue] = useState(null);
+  const [zoomCaps, setZoomCaps] = useState(null); // { min, max, step } | null kalau tidak didukung
+  const [zoomValue, setZoomValue] = useState(1);
+  const [photoError, setPhotoError] = useState('');
+  const [decodingPhoto, setDecodingPhoto] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const scanner = new Html5Qrcode(containerId);
+    const scanner = new Html5Qrcode(containerId, { verbose: false });
     scannerRef.current = scanner;
 
-    // stop() milik html5-qrcode bisa throw secara langsung (bukan reject promise)
-    // kalau dipanggil saat scanner belum/tidak sedang "running". Ini terjadi kalau
-    // React StrictMode memanggil cleanup sebelum scanner.start() selesai jalan.
-    // Makanya di-bungkus try/catch, bukan cuma .catch(), supaya gak crash.
-    const safeStop = async () => {
-      try {
-        if (scannerRef.current && scannerRef.current.isScanning) {
-          await scannerRef.current.stop();
-        }
-      } catch (e) {
-        // Aman diabaikan: scanner memang sudah berhenti/belum sempat mulai.
-      }
-    };
-
-    scanner
+    const startPromise = scanner
       .start(
-        {
-          facingMode: 'environment',
-          // Minta resolusi setinggi mungkin ke kamera, supaya QR yang kecil
-          // di frame tetap punya cukup detail piksel untuk di-decode.
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
+        { facingMode: 'environment' },
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
-          // Pakai BarcodeDetector native browser kalau device/browser support —
-          // biasanya lebih akurat & lebih cepat dibanding decoder JS bawaan,
-          // terutama untuk QR kecil/jauh.
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+          aspectRatio: 1.777778,
+          videoConstraints: {
+            facingMode: 'environment',
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            advanced: [{ focusMode: 'continuous' }],
+          },
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
         },
         (decodedText) => {
           if (cancelled) return;
           onScan(decodedText);
-          safeStop();
         },
         () => {} // error callback per-frame, diabaikan (normal saat belum ketemu barcode)
       )
       .then(() => {
         if (cancelled) return;
-        // Cek apakah kamera yang aktif support hardware zoom. Tidak semua
-        // device/browser punya ini (khususnya iOS Safari sering tidak).
         try {
-          const capabilities = scannerRef.current.getRunningTrackCapabilities();
-          if (capabilities && capabilities.zoom) {
-            const { min, max, step } = capabilities.zoom;
-            setZoomCapability({ min, max, step: step || 0.1 });
-            setZoomValue(min);
+          const caps = scanner.getRunningTrackCapabilities();
+          if (caps && caps.zoom && caps.zoom.max > caps.zoom.min) {
+            setZoomCaps({ min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 });
+            setZoomValue(caps.zoom.min);
+          } else {
+            // Debug bantu cek kenapa slider tidak muncul di device tertentu.
+            console.info('Kamera ini tidak expose kapabilitas zoom (normal di sebagian device/browser).');
           }
         } catch (e) {
-          // Device tidak expose track capabilities, abaikan (zoom manual tidak muncul).
+          console.info('Gagal baca kapabilitas kamera:', e.message);
         }
       })
       .catch((err) => {
         if (!cancelled) console.error('Gagal memulai kamera:', err);
       });
 
+    // PENTING: cleanup menunggu start() selesai (sukses/gagal) dulu sebelum stop().
+    // Ini mencegah race condition React StrictMode (dev mode menjalankan effect 2x)
+    // yang sebelumnya bikin 2 stream kamera nyala bersamaan (dobel tampilan + lag).
+    // Tidak berdampak ke production build (StrictMode double-invoke cuma di dev).
     return () => {
       cancelled = true;
-      safeStop();
+      startPromise.finally(async () => {
+        try {
+          if (scanner.isScanning) {
+            await scanner.stop();
+          }
+        } catch (e) {
+          // Aman diabaikan.
+        }
+        // Bersihkan manual sisa elemen <video>/<canvas> di container, jaga-jaga
+        // supaya instance berikutnya (remount) tidak numpuk di DOM yang sama.
+        const el = document.getElementById(containerId);
+        if (el) el.innerHTML = '';
+      });
     };
   }, [onScan]);
 
-  function handleZoomChange(e) {
-    const value = parseFloat(e.target.value);
+  const handleZoomChange = async (e) => {
+    const value = Number(e.target.value);
     setZoomValue(value);
-    scannerRef.current?.applyVideoConstraints({ advanced: [{ zoom: value }] }).catch(() => {
-      // Kalau gagal apply (device menolak di tengah jalan), abaikan saja.
-    });
-  }
+    try {
+      await scannerRef.current.applyVideoConstraints({ advanced: [{ zoom: value }] });
+    } catch (err) {
+      console.error('Gagal terapkan zoom:', err.message);
+    }
+  };
+
+  const handlePhotoPicked = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // reset supaya bisa pilih file yang sama lagi kalau perlu retry
+    if (!file) return;
+
+    setPhotoError('');
+    setDecodingPhoto(true);
+    try {
+      // Hentikan live scan dulu supaya tidak rebutan kamera dengan proses decode foto.
+      if (scannerRef.current?.isScanning) {
+        await scannerRef.current.stop();
+      }
+      // scanFile mendecode dari resolusi PENUH file gambar (bukan video preview
+      // yang di-downscale), jadi jauh lebih kuat untuk QR yang fisiknya kecil —
+      // apalagi kalau usernya pinch-zoom optik dulu sebelum jepret.
+      const decodedText = await scannerRef.current.scanFile(file, false);
+      onScan(decodedText);
+    } catch (err) {
+      setPhotoError('QR tidak terbaca dari foto ini. foto  ulang dengan lebih dekat/fokus.');
+      console.error('Gagal decode foto:', err);
+    } finally {
+      setDecodingPhoto(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
@@ -94,25 +134,52 @@ export default function BarcodeScanner({ onScan, onClose }) {
         </div>
         <div id={containerId} className="w-full" style={{ minHeight: '280px' }} />
 
-        {zoomCapability && (
+        {zoomCaps && (
           <div className="mt-3 flex items-center gap-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">Zoom</span>
             <input
               type="range"
-              min={zoomCapability.min}
-              max={zoomCapability.max}
-              step={zoomCapability.step}
+              min={zoomCaps.min}
+              max={zoomCaps.max}
+              step={zoomCaps.step}
               value={zoomValue}
               onChange={handleZoomChange}
               className="flex-1"
             />
+            <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+              {zoomValue.toFixed(1)}x
+            </span>
           </div>
         )}
 
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
           Arahkan kamera ke QR Code/Barcode pada aset.
-          {zoomCapability ? ' Geser slider zoom kalau QR terlalu kecil/jauh.' : ''}
         </p>
+
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">
+            Jika QR sangat keciil dan tidak terbaca? gunakan kamera HP untuk memotret
+          </p>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={decodingPhoto}
+            className="w-full text-sm font-medium py-2 rounded-md bg-blue-600 text-white disabled:opacity-60"
+          >
+            {decodingPhoto ? 'Membaca foto...' : 'Ambil Foto untuk QR Kecil'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoPicked}
+            className="hidden"
+          />
+          {photoError && (
+            <p className="text-xs text-red-500 mt-2 text-center">{photoError}</p>
+          )}
+        </div>
       </div>
     </div>
   );
