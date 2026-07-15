@@ -2,6 +2,7 @@
 // (Bagian 9 PRD): header, data konfigurasi, tabel Check Device Functions,
 // tabel Standard Software 2 kolom, Additional Software 6 baris, Notes,
 // dan area tanda tangan (dikosongkan).
+const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
 
 function checkbox(isChecked) {
   return `<span class="checkbox">${isChecked ? '&#10003;' : ''}</span>`;
@@ -33,6 +34,7 @@ function buildChecklistHtml(checklist) {
     technician_name, technician_signature,
     pic_name, pic_signature,
     spv_name, spv_signature, spv_approved_at,
+    attachments, attachments_note,
   } = checklist;
 
   const deviceRows = device_items.map((item) => `
@@ -215,6 +217,7 @@ function buildChecklistHtml(checklist) {
     font-size: 10px;
     color: #374151;
   }
+  ${attachmentStyles}
 </style>
 </head>
 <body>
@@ -309,6 +312,7 @@ function buildChecklistHtml(checklist) {
       ${technician_name ? `<div class="signature-name">${technician_name}</div>` : ''}
     </div>
   </div>
+  ${buildAttachmentsHtml(attachments, attachments_note)}
 </body>
 </html>
   `;

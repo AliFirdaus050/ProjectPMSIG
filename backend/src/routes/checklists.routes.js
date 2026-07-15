@@ -102,7 +102,9 @@ router.post('/', async (req, res) => {
 
     if (existingDraft.rows.length > 0) {
         // udah ada draft aktif, langsung kembalikan itu, jangan bikin baris baru
-        return res.status(200).json({ data: existingDraft.rows[0], resumed: true });
+        // (bentuk response disamakan flat seperti create baru, supaya frontend
+        // yang baca `checklist.id` langsung tetap bekerja di kedua kasus)
+        return res.status(200).json(existingDraft.rows[0]);
     }
 
     const result = await pool.query(
@@ -149,9 +151,12 @@ router.patch('/:id', async (req, res) => {
     pic_user_id,
     technician_signature,
     pic_signature,
+    attachments,
+    attachments_note,
   } = req.body;
 
   const normalizedConsumableType = consumable_type === '' ? null : consumable_type;
+  const normalizedAttachments = Array.isArray(attachments) ? JSON.stringify(attachments) : null;
 
   const client = await pool.connect();
   try {
@@ -182,12 +187,15 @@ router.patch('/:id', async (req, res) => {
            pic_user_id = COALESCE($12, pic_user_id),
            technician_signature = COALESCE($13, technician_signature),
            pic_signature = COALESCE($14, pic_signature),
+           attachments = COALESCE($15::jsonb, attachments),
+           attachments_note = COALESCE($16, attachments_note),
            updated_at = now()
-       WHERE id = $15`,
+       WHERE id = $17`,
       [
         hostname_note, ip_address, mac_address, firmware_series, normalizedConsumableType,
         ink_black, ink_cyan, ink_magenta, ink_yellow, technician_notes,
-        pic_name, pic_user_id, technician_signature, pic_signature, id,
+        pic_name, pic_user_id, technician_signature, pic_signature,
+        normalizedAttachments, attachments_note, id,
       ]
     );
 

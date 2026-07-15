@@ -30,6 +30,10 @@ export default function ChecklistFormPage() {
   const [picSignature, setPicSignature] = useState('');
   const [picName, setPicName] = useState('');
 
+  // attachments: [{ cells: [{image, caption}, {image, caption}?] }] — lampiran foto opsional (halaman 2 PDF)
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentsNote, setAttachmentsNote] = useState('');
+
   const [lastSaved, setLastSaved] = useState(null);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -58,6 +62,8 @@ export default function ChecklistFormPage() {
       setTechnicianSignature(checklistData.technician_signature || '');
       setPicSignature(checklistData.pic_signature || '');
       setPicName(checklistData.pic_name || '');
+      setAttachments(Array.isArray(checklistData.attachments) ? checklistData.attachments : []);
+      setAttachmentsNote(checklistData.attachments_note || '');
 
       const existingDevice = new Map(checklistData.device_items.map((d) => [d.item_name, d]));
       const bySection = {};
@@ -119,6 +125,8 @@ export default function ChecklistFormPage() {
         technician_signature: technicianSignature || undefined,
         pic_name: config?.hasPic ? (picName || undefined) : undefined,
         pic_signature: config?.hasPic ? (picSignature || undefined) : undefined,
+        attachments,
+        attachments_note: attachmentsNote,
       });
       setLastSaved(new Date());
     } catch (err) {
@@ -131,7 +139,7 @@ export default function ChecklistFormPage() {
     function handleOnline() { doSave(); }
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [deviceItemsBySection, softwareItems, additionalSoftware, hostnameNote, ipAddress, macAddress, firmwareSeries, consumableType, inkBlack, inkCyan, inkMagenta, inkYellow, technicianNotes, technicianSignature, picSignature, picName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deviceItemsBySection, softwareItems, additionalSoftware, hostnameNote, ipAddress, macAddress, firmwareSeries, consumableType, inkBlack, inkCyan, inkMagenta, inkYellow, technicianNotes, technicianSignature, picSignature, picName, attachments, attachmentsNote]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function updateDeviceCondition(sectionKey, index, condition) {
     setDeviceItemsBySection((prev) => {
@@ -173,6 +181,48 @@ export default function ChecklistFormPage() {
   function handlePicSignatureChange(dataUrl) {
     setPicSignature(dataUrl);
     scheduleSave();
+  }
+
+  function addAttachmentRow(colCount) {
+    setAttachments((prev) => [
+      ...prev,
+      { cells: Array.from({ length: colCount }, () => ({ image: '', caption: '' })) },
+    ]);
+    scheduleSave();
+  }
+
+  function removeAttachmentRow(rowIndex) {
+    setAttachments((prev) => prev.filter((_, i) => i !== rowIndex));
+    scheduleSave();
+  }
+
+  function updateAttachmentCaption(rowIndex, cellIndex, caption) {
+    setAttachments((prev) => {
+      const updated = prev.map((row, i) => {
+        if (i !== rowIndex) return row;
+        const cells = row.cells.map((c, j) => (j === cellIndex ? { ...c, caption } : c));
+        return { ...row, cells };
+      });
+      return updated;
+    });
+    scheduleSave();
+  }
+
+  function updateAttachmentImage(rowIndex, cellIndex, file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachments((prev) => {
+        const updated = prev.map((row, i) => {
+          if (i !== rowIndex) return row;
+          const cells = row.cells.map((c, j) => (j === cellIndex ? { ...c, image: reader.result } : c));
+          return { ...row, cells };
+        });
+        return updated;
+      });
+      scheduleSave();
+    };
+    reader.readAsDataURL(file);
   }
 
   async function handleGeneratePdf() {
@@ -377,6 +427,59 @@ export default function ChecklistFormPage() {
                   className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
                 />
               )}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Lampiran Foto (Opsional)</h2>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => addAttachmentRow(1)} className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200">+ Baris 1 Foto</button>
+                <button type="button" onClick={() => addAttachmentRow(2)} className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200">+ Baris 2 Foto</button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Gunakan + Baris 1 Foto untuk foto tunggal, dan + Baris 2 Foto untuk perbandingan before after.
+            </p>
+            <div className="space-y-3">
+              {attachments.map((row, rowIndex) => (
+                <div key={rowIndex} className="border border-gray-200 dark:border-slate-600 rounded p-3">
+                  <div className="flex justify-end mb-2">
+                    <button type="button" onClick={() => removeAttachmentRow(rowIndex)} className="text-xs text-red-600">Hapus baris</button>
+                  </div>
+                  <div className={`grid gap-3 ${row.cells.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {row.cells.map((cell, cellIndex) => (
+                      <div key={cellIndex} className="space-y-1">
+                        {cell.image && (
+                          <img src={cell.image} alt="" className="w-full h-32 object-cover rounded border border-gray-200 dark:border-slate-600" />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => updateAttachmentImage(rowIndex, cellIndex, e.target.files?.[0])}
+                          className="text-xs w-full text-gray-600 dark:text-gray-300"
+                        />
+                        <input
+                          value={cell.caption}
+                          onChange={(e) => updateAttachmentCaption(rowIndex, cellIndex, e.target.value)}
+                          placeholder="Keterangan foto"
+                          className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-2 py-1 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3">
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Keterangan Akhir</label>
+              <textarea
+                value={attachmentsNote}
+                onChange={(e) => { setAttachmentsNote(e.target.value); scheduleSave(); }}
+                placeholder="Keterangan tambahan (paragraf bebas, opsional)"
+                rows={3}
+                className="w-full border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
+              />
             </div>
           </div>
 

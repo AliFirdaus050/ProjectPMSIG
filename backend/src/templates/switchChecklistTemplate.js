@@ -1,3 +1,5 @@
+const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
+
 function checkbox(isChecked) {
   return `<span class="checkbox">${isChecked ? '&#10003;' : ''}</span>`;
 }
@@ -30,6 +32,7 @@ function buildSwitchChecklistHtml(checklist) {
     device_items, technician_notes,
     technician_name, technician_signature,
     spv_name, spv_signature, spv_approved_at,
+    attachments, attachments_note,
   } = checklist;
 
   // device_items berisi gabungan "Check Device Functions" (7 item) dan
@@ -82,6 +85,7 @@ function buildSwitchChecklistHtml(checklist) {
   .signature-image { max-width: 130px; max-height: 50px; }
   .signature-line { border-top: 1px dashed #111827; margin-top: 4px; }
   .signature-name { margin-top: 4px; font-size: 10px; color: #374151; }
+  ${attachmentStyles}
 </style>
 </head>
 <body>
@@ -151,6 +155,7 @@ function buildSwitchChecklistHtml(checklist) {
       ${technician_name ? `<div class="signature-name">${technician_name}</div>` : ''}
     </div>
   </div>
+${buildAttachmentsHtml(attachments, attachments_note)}
 </body>
 </html>
   `;

@@ -6,7 +6,7 @@ const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 router.use(authenticate);
-router.use(authorize('admin')); // seluruh endpoint di file ini khusus Admin
+router.use(authorize('admin', 'spv')); // seluruh endpoint di file ini: Admin & SPV (akses setara)
 
 const VALID_ROLES = ['admin', 'spv', 'teknisi', 'pic'];
 

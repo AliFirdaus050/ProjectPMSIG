@@ -1,3 +1,5 @@
+const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
+
 function checkbox(isChecked) {
   return `<span class="checkbox">${isChecked ? '&#10003;' : ''}</span>`;
 }
@@ -29,6 +31,7 @@ function buildPrinterChecklistHtml(checklist) {
     technician_name, technician_signature,
     pic_name, pic_signature,
     spv_name, spv_signature, spv_approved_at,
+    attachments, attachments_note,
   } = checklist;
 
   function itemRow(item) {
@@ -76,6 +79,7 @@ function buildPrinterChecklistHtml(checklist) {
   .signature-image { max-width: 130px; max-height: 50px; }
   .signature-line { border-top: 1px dashed #111827; margin-top: 4px; }
   .signature-name { margin-top: 4px; font-size: 10px; color: #374151; }
+  ${attachmentStyles}
 </style>
 </head>
 <body>
@@ -157,6 +161,7 @@ function buildPrinterChecklistHtml(checklist) {
       ${technician_name ? `<div class="signature-name">${technician_name}</div>` : ''}
     </div>
   </div>
+${buildAttachmentsHtml(attachments, attachments_note)}
 </body>
 </html>
   `;

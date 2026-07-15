@@ -16,7 +16,7 @@ const ALL_MENUS = [
   { path: '/tracker', label: 'Tracker PM', description: 'Pantau status PM periode berjalan', roles: ['teknisi', 'spv', 'pic'], icon: 'monitoring', badge: 'LIVE', badgeClass: 'bg-green-100 text-green-700' },
   { path: '/history', label: 'Riwayat', description: 'Riwayat checklist yang pernah dibuat', roles: ['teknisi'], icon: 'history' },
   { path: '/devices', label: 'Edit Database Device', description: 'Kelola data master device', roles: ['teknisi', 'spv', 'admin'], icon: 'database' },
-  { path: '/users', label: 'Kelola User', description: 'Kelola akun & role pengguna sistem', roles: ['admin'], icon: 'group', badge: 'ADMIN', badgeClass: 'bg-purple-100 text-purple-700' },
+  { path: '/users', label: 'Kelola User', description: 'Kelola akun & role pengguna sistem', roles: ['admin', 'spv'], icon: 'group', badge: 'ADMIN', badgeClass: 'bg-purple-100 text-purple-700' },
   { path: '/logs', label: 'Log Aktivitas', description: 'Jejak audit seluruh aktivitas sistem', roles: ['admin'], icon: 'history_edu', badge: 'ADMIN', badgeClass: 'bg-purple-100 text-purple-700' },
 ];
 

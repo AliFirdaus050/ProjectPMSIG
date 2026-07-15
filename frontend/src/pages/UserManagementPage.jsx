@@ -5,7 +5,6 @@ const ROLE_LABELS = {
   admin: 'Admin',
   spv: 'SPV',
   teknisi: 'Teknisi',
-  pic: 'PIC',
 };
 
 export default function UserManagementPage() {
