@@ -104,12 +104,12 @@ export default function TrackerPage() {
 
       <div className="bg-surface dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded overflow-hidden shadow-sm">
         <div className="hidden md:grid grid-cols-12 gap-4 px-4 h-10 items-center bg-surface dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 text-on-surface-variant dark:text-gray-400 font-label-md text-label-md uppercase tracking-wider">
-            <div className="col-span-1 text-center">Device</div>
-            <div className="col-span-2 text-center">Serial Number</div>
-            <div className="col-span-2 text-center">Perangkat</div>
-            <div className="col-span-3 text-center">Lokasi</div>
-            <div className="col-span-1 text-center">Teknisi</div>
-            <div className="col-span-1 text-center">Status</div>
+            <div className="col-span-1">Device</div>
+            <div className="col-span-2">Serial Number</div>
+            <div className="col-span-2">Perangkat</div>
+            <div className="col-span-3">Lokasi</div>
+            <div className="col-span-1">Teknisi</div>
+            <div className="col-span-1">Status</div>
             <div className="col-span-2 text-center">Aksi</div>
         </div>
 
