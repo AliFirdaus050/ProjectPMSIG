@@ -102,7 +102,7 @@ router.post('/', async (req, res) => {
 
     if (existingDraft.rows.length > 0) {
         // udah ada draft aktif, langsung kembalikan itu, jangan bikin baris baru
-        return res.status(200).json({ data: existingDraft.rows[0], resumed: true });
+        return res.status(200).json({ ...existingDraft.rows[0], resumed: true });
     }
 
     const result = await pool.query(

@@ -30,11 +30,30 @@ export default function ChecklistFormPage() {
   const [picSignature, setPicSignature] = useState('');
   const [picName, setPicName] = useState('');
 
+  // Tanda tangan Teknisi sekarang tidak digambar manual tiap kali — cukup
+  // tombol "Gunakan Tanda Tangan Tersimpan" yang ambil dari halaman Profil.
+  const [savedSignature, setSavedSignature] = useState(null);
+  const [savedSignatureLoading, setSavedSignatureLoading] = useState(true);
+
   const [lastSaved, setLastSaved] = useState(null);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
 
   const saveTimer = useRef(null);
+
+  useEffect(() => {
+    async function loadSavedSignature() {
+      try {
+        const result = await api.get('/signatures/me');
+        setSavedSignature(result.signature_data || null);
+      } catch {
+        setSavedSignature(null);
+      } finally {
+        setSavedSignatureLoading(false);
+      }
+    }
+    loadSavedSignature();
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -165,8 +184,14 @@ export default function ChecklistFormPage() {
     scheduleSave();
   }
 
-  function handleTechnicianSignatureChange(dataUrl) {
-    setTechnicianSignature(dataUrl);
+  function handleUseSavedSignature() {
+    if (!savedSignature) return;
+    setTechnicianSignature(savedSignature);
+    scheduleSave();
+  }
+
+  function handleClearTechnicianSignature() {
+    setTechnicianSignature('');
     scheduleSave();
   }
 
@@ -383,11 +408,38 @@ export default function ChecklistFormPage() {
           <div className="bg-white dark:bg-slate-800 shadow rounded-lg p-5">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Tanda Tangan</h2>
             <div className="space-y-4">
-              <SignaturePad
-                label="Tanda Tangan Teknisi"
-                value={technicianSignature}
-                onChange={handleTechnicianSignatureChange}
-              />
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tanda Tangan Teknisi</label>
+
+                {savedSignatureLoading ? (
+                  <p className="text-xs text-gray-400">Memuat...</p>
+                ) : !savedSignature ? (
+                  <p className="text-xs text-status-warning">
+                    Kamu belum punya tanda tangan tersimpan.{' '}
+                    <a href="/profile" className="underline">Simpan dulu di halaman Profil</a>.
+                  </p>
+                ) : technicianSignature ? (
+                  <div className="flex items-center gap-3">
+                    <img src={technicianSignature} alt="Tanda tangan teknisi" className="h-14 border border-gray-200 dark:border-slate-600 rounded bg-white" />
+                    <button
+                      type="button"
+                      onClick={handleClearTechnicianSignature}
+                      className="text-xs text-status-error underline"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleUseSavedSignature}
+                    className="bg-primary hover:bg-primary-dark text-white rounded px-4 py-2 text-sm font-medium"
+                  >
+                    Gunakan Tanda Tangan Tersimpan
+                  </button>
+                )}
+              </div>
+
               {config.hasPic && (
                 <>
                   <div>

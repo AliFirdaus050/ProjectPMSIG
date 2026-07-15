@@ -67,7 +67,7 @@ export default function Layout({ children }) {
           </nav>
 
           <div className="flex items-center gap-stack-compact">
-            {user?.role === 'spv' && (
+            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'admin') && (
               <Link
                 to="/profile"
                 className="hidden md:block text-body-sm text-slate-300 hover:text-white px-2"
@@ -110,7 +110,7 @@ export default function Layout({ children }) {
                 {link.label}
               </NavLink>
             ))}
-            {user?.role === 'spv' && (
+            {(user?.role === 'teknisi' || user?.role === 'spv' || user?.role === 'admin') && (
               <Link
                 to="/profile"
                 onClick={() => setMobileMenuOpen(false)}

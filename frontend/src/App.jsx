@@ -38,6 +38,14 @@ function SpvRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
+function ProfileRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-8 text-gray-500 text-sm">Memuat...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!['teknisi', 'spv', 'admin'].includes(user.role)) return <Navigate to="/" replace />;
+  return <Layout>{children}</Layout>;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -51,7 +59,7 @@ function AppRoutes() {
       <Route path="/tracker" element={<ProtectedRoute><TrackerPage /></ProtectedRoute>} />
       <Route path="/devices" element={<ProtectedRoute><AssetDatabasePage /></ProtectedRoute>} />
       <Route path="/upload-jadwal" element={<ProtectedRoute><ScheduleUploadPage /></ProtectedRoute>} />
-      <Route path="/profile" element={<SpvRoute><ProfilePage /></SpvRoute>} />
+      <Route path="/profile" element={<ProfileRoute><ProfilePage /></ProfileRoute>} />
       <Route path="/logs" element={<AdminRoute><ActivityLogPage /></AdminRoute>} />
     </Routes>
   );
