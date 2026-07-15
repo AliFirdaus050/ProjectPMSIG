@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
 
 //const BACKEND_ORIGIN = 'http://localhost:4000';
@@ -27,15 +27,25 @@ export default function ChecklistPreviewPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-lg font-semibold text-gray-900">Preview PDF Checklist</h1>
-          {pdfUrl && (
-            <a
-              href={pdfUrl}
-              download="checklist-pm.pdf"
-              className="bg-primary hover:bg-primary-dark text-white rounded px-4 py-2 text-sm font-medium"
+          
+          <div className="flex items-center gap-2">
+            <Link
+              to="/checklist-baru"
+              className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded px-4 py-2 text-sm font-medium transition-colors"
             >
-              Unduh PDF
-            </a>
-          )}
+              Kembali ke PM
+            </Link>
+            
+            {pdfUrl && (
+              <a
+                href={pdfUrl}
+                download="checklist-pm.pdf"
+                className="bg-primary hover:bg-primary-dark text-white rounded px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Unduh PDF
+              </a>
+            )}
+          </div>
         </div>
 
         {error && <div className="bg-red-50 text-red-600 text-sm rounded p-3 mb-4">{error}</div>}
