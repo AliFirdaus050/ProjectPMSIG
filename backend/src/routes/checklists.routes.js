@@ -22,8 +22,7 @@ const router = express.Router();
 router.use(authenticate);
 
 // GET /api/v1/checklists/template?asset_name=Printer
-// Frontend sudah tahu asset_name dari hasil lookup serial number sebelum
-// halaman checklist dibuka, jadi dikirim sebagai query param di sini.
+// frontend tahu assetname dari serial look up
 router.get('/template', (req, res) => {
   const { asset_name } = req.query;
   if (!asset_name) {
@@ -38,7 +37,8 @@ router.get('/template', (req, res) => {
   res.json(config);
 });
 
-// POST /api/v1/checklists — membuat checklist baru (status: draft)
+// POST /api/v1/checklists
+// membuat checklist baru (status: draft)
 router.post('/', async (req, res) => {
   const { asset_id } = req.body;
   if (!asset_id) {
@@ -61,8 +61,7 @@ router.post('/', async (req, res) => {
 
     const { periodKey } = getPeriodForDate();
 
-    // Gating: teknisi hanya boleh PM device yang ada di jadwal periode berjalan.
-    // Admin/SPV dikecualikan (butuh akses penuh untuk keperluan support/testing).
+    // hanya bisa PM sesuai jadwal periode yang berlangsung, admin spv bisa buat test
     if (req.user.role === 'teknisi') {
       const scheduleCheck = await pool.query(
         'SELECT id FROM pm_schedules WHERE period_key = $1 AND asset_id = $2',
@@ -75,7 +74,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Auto-suggest PIC dari relasi pic_assets (kalau ada akun PIC yang di-assign manual)
+    // isi otomatis pic klo ada di tabel assets
     const picResult = await pool.query(
       `SELECT u.id, u.full_name FROM pic_assets pa
        JOIN users u ON pa.pic_user_id = u.id
@@ -84,8 +83,7 @@ router.post('/', async (req, res) => {
     );
     const suggestedPicId = picResult.rows.length === 1 ? picResult.rows[0].id : null;
 
-    // pic_name (teks bebas untuk PDF) diambil dari jadwal periode berjalan.
-    // Ini independen dari pic_user_id di atas — tidak butuh akun PIC untuk terisi.
+    // pic_name bisa diisi bebas
     const scheduleResult = await pool.query(
       'SELECT pic_name FROM pm_schedules WHERE period_key = $1 AND asset_id = $2',
       [periodKey, asset_id]
@@ -101,9 +99,7 @@ router.post('/', async (req, res) => {
     );
 
     if (existingDraft.rows.length > 0) {
-        // udah ada draft aktif, langsung kembalikan itu, jangan bikin baris baru
-        // (bentuk response disamakan flat seperti create baru, supaya frontend
-        // yang baca `checklist.id` langsung tetap bekerja di kedua kasus)
+        // udah ada draft aktif, langsung kembalikan itu
         // return res.status(200).json(existingDraft.rows[0]);
         return res.status(200).json({ ...existingDraft.rows[0], resumed: true });
     }
@@ -131,7 +127,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/v1/checklists/:id — auto-save (FR-3), mendukung semua kategori
+// PATCH /api/v1/checklists/:id
+// auto-save mendukung semua kategori
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const {
@@ -169,9 +166,7 @@ router.patch('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Checklist tidak ditemukan.' });
     }
 
-    // Update field notes & field khusus kategori (Printer/Switch) sekaligus.
-    // Field yang tidak relevan untuk kategori tertentu (misal firmware_series
-    // untuk PC/Laptop) tetap aman di-COALESCE, cuma tidak pernah keisi.
+    // update untuk printer dan switch, pc lapyop aman dikosongi aja
     await client.query(
       `UPDATE pm_checklists
        SET hostname_note = COALESCE($1, hostname_note),
@@ -200,8 +195,7 @@ router.patch('/:id', async (req, res) => {
       ]
     );
 
-    // Device items: dipakai lintas kategori (Check Device Functions untuk semua,
-    // + Device Utilization khusus Switch — sama-sama item_name/condition/information)
+    // untuk semua device
     if (Array.isArray(device_items)) {
       await client.query('DELETE FROM checklist_device_items WHERE checklist_id = $1', [id]);
       for (const item of device_items) {
@@ -214,8 +208,7 @@ router.patch('/:id', async (req, res) => {
       }
     }
 
-    // Software items: cuma relevan untuk PC/Laptop, tapi endpoint ini generic —
-    // kalau frontend tidak kirim (Printer/Switch), bagian ini otomatis di-skip.
+    // software yang hanya ada di pc/laptop, switch dan printer skip
     if (Array.isArray(software_items)) {
       await client.query('DELETE FROM checklist_software_items WHERE checklist_id = $1', [id]);
       for (const item of software_items) {
@@ -249,7 +242,7 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// Helper: ambil data lengkap checklist + kategori aset, dipakai di beberapa endpoint
+// ambil data checklist, kategori
 async function fetchFullChecklist(id) {
   const checklistResult = await pool.query(
     `SELECT pc.*, a.asset_name, a.asset_tag, a.serial_number, a.site, a.model, a.detail_location,
@@ -278,8 +271,8 @@ async function fetchFullChecklist(id) {
   };
 }
 
-// POST /api/v1/checklists/:id/generate-pdf (FR-4) — placeholder validasi,
-// pemanggilan Puppeteer & template per kategori disambungkan di langkah berikutnya.
+// POST /api/v1/checklists/:id/generate-pdf
+// buat ngambil pupetter generate pdf
 router.post('/:id/generate-pdf', async (req, res) => {
   const { id } = req.params;
 
@@ -353,7 +346,8 @@ router.post('/:id/generate-pdf', async (req, res) => {
   }
 });
 
-// POST /api/v1/checklists/:id/approve — SPV approve checklist (alur akhir, Bagian 4 draft)
+// POST /api/v1/checklists/:id/approve
+// spv approve checklist (akhir dari pm)
 router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
   const { id } = req.params;
   const { manual_signature } = req.body; // opsional, kalau SPV mau tanda tangan ulang bukan pakai yang tersimpan
@@ -391,8 +385,7 @@ router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
       [req.user.id, signatureToUse, id]
     );
 
-    // PDF sebelumnya dibuat teknisi tanpa tanda tangan SPV (belum approve saat itu).
-    // Regenerate sekarang supaya PDF final sudah termasuk tanda tangan SPV.
+    // pdf sebelumnya dibuat teknisi yg belum di ttd spv, kemudian saat di approve regenerate dengan ttd spv muncul
     const checklistForPdf = await fetchFullChecklist(id);
     const buildHtml = getTemplateBuilder(checklistForPdf.asset_name);
     if (buildHtml) {
@@ -442,7 +435,8 @@ router.get('/:id/pdf', async (req, res) => {
   }
 });
 
-// GET /api/v1/checklists/:id — detail lengkap
+// GET /api/v1/checklists/:id 
+// detail lengkap
 router.get('/:id', async (req, res) => {
   try {
     const checklist = await fetchFullChecklist(req.params.id);
@@ -456,7 +450,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/v1/checklists — riwayat, dengan filter (Bagian 4.3 PRD)
+// GET /api/v1/checklists
+// riwayat dengan filter
 router.get('/', async (req, res) => {
   const { site, serial_number, date_from, date_to, asset_name, status, period_key } = req.query;
   const conditions = [];
@@ -466,7 +461,6 @@ router.get('/', async (req, res) => {
     values.push(req.user.id);
     conditions.push(`pc.technician_id = $${values.length}`);
   } else if (req.user.role === 'pic') {
-    // PIC cuma lihat checklist untuk device yang jadi tanggung jawabnya (pic_assets)
     values.push(req.user.id);
     conditions.push(`pc.asset_id IN (SELECT asset_id FROM pic_assets WHERE pic_user_id = $${values.length})`);
   } else if (req.query.technician_id) {

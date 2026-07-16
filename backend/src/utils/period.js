@@ -1,3 +1,5 @@
+// INI BUAT NGATUR PERIODE
+
 function getToday() {
   if (process.env.OVERRIDE_TODAY) {
     return new Date(process.env.OVERRIDE_TODAY);
@@ -10,8 +12,8 @@ function getPeriodForDate(date = getToday()) {
   let year = date.getFullYear();
   let month = date.getMonth(); // 0-indexed
 
+  // atur PERIODE bulan. jika tanggal <15 maka masih periode sebeumnya
   if (day < 15) {
-    // Tanggal < 15 berarti masih bagian dari periode yang mulai bulan sebelumnya
     month -= 1;
     if (month < 0) {
       month = 11;

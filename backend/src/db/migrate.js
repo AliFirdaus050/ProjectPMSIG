@@ -2,10 +2,16 @@
 // - Membaca semua file .sql di folder migrations secara berurutan (nama file diawali angka)
 // - Mencatat file yang sudah dijalankan di tabel schema_migrations
 // - Menjalankan file yang belum pernah dijalankan, masing-masing dalam satu transaction
+
+/*
+runner buat migrasi semua database yang ada di tabel migration
+
+penggunaan = pnpm run migrate
+*/
+
 const fs = require('fs');
 const path = require('path');
 const pool = require('../config/db');
-
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
 async function ensureMigrationsTable(client) {
@@ -35,12 +41,12 @@ async function runMigrations() {
 
     for (const file of files) {
       if (applied.has(file)) {
-        console.log(`- Skip (sudah dijalankan): ${file}`);
+        console.log(`- skipp (sudah di run): ${file}`);
         continue;
       }
 
       const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
-      console.log(`- Menjalankan: ${file}`);
+      console.log(`- ngerun: ${file}`);
 
       try {
         await client.query('BEGIN');
@@ -49,12 +55,12 @@ async function runMigrations() {
         await client.query('COMMIT');
       } catch (err) {
         await client.query('ROLLBACK');
-        console.error(`Gagal menjalankan ${file}:`, err.message);
+        console.error(`gagal ngerun ${file}:`, err.message);
         throw err;
       }
     }
 
-    console.log('Semua migration selesai dijalankan.');
+    console.log('Semua migrasi sudah berhasil di run.');
   } finally {
     client.release();
     await pool.end();
@@ -62,6 +68,6 @@ async function runMigrations() {
 }
 
 runMigrations().catch((err) => {
-  console.error('Migration dihentikan karena error.', err);
+  console.error('Mberhenti karena error.', err);
   process.exit(1);
 });

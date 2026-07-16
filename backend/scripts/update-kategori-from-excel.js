@@ -1,25 +1,16 @@
-// Script satu kali: isi kolom `kategori` di tabel `assets` yang sudah ada,
-// berdasarkan pencocokan `asset_tag` dari file Excel.
-//
-// Ini SENGAJA hanya UPDATE, tidak pernah INSERT baris baru -> aman dijalankan
-// berkali-kali ke database yang datanya sudah ada, tidak akan bikin duplikat.
-//
-// CARA PAKAI:
-//   cd backend
-//   node scripts/update-kategori-from-excel.js /path/ke/file.xlsx --dry-run
-//   node scripts/update-kategori-from-excel.js /path/ke/file.xlsx
-//
-// Dry-run dulu SELALU disarankan sebelum run beneran, untuk lihat preview
-// berapa baris yang bakal ke-update dan asset_tag mana yang tidak ketemu.
+/*
+script digunakan sekali pakai, untuk mengisi kolom KATEGORI (standart, vip, dll) dalam database yg udah ada
+
+dry run dulu untuk melihat apa yang diinginkan
+
+node scripts/update-kategori-from-excel.js /path/ke/file.xlsx --dry-run
+node scripts/update-kategori-from-excel.js /path/ke/file.xlsx
+*/
 
 const path = require('path');
 const XLSX = require('xlsx');
 const pool = require('../src/config/db');
-
-// Kolom yang mungkin merged cell di Excel (nilai kosong berarti "sama dengan
-// baris di atasnya"), sama seperti di import-assets-from-excel.js.
-const FILL_DOWN_COLUMNS = ['Asset Name', 'Category'];
-
+const FILL_DOWN_COLUMNS = ['Asset Name', 'Category']; // handle merge cell
 const COLUMN_MAP = {
   'asset tag': 'asset_tag',
   kategori: 'kategori',

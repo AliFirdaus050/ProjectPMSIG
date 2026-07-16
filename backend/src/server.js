@@ -1,7 +1,8 @@
+// servernya
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
 const pool = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
 const assetsRoutes = require('./routes/assets.routes');
@@ -10,7 +11,6 @@ const schedulesRoutes = require('./routes/schedules.routes');
 const signaturesRoutes = require('./routes/signatures.routes');
 const usersRoutes = require('./routes/users.routes');
 const logsRoutes = require('./routes/logs.routes');
-
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '30mb' }));

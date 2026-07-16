@@ -1,9 +1,11 @@
-// Bikin user baru dengan role tertentu.
-// Usage: node scripts/seed-admin.js "Nama Lengkap" email@sig.co.id passwordnya [role]
-// role: admin | spv | teknisi | pic (default: admin)
+/*
+script digunakan untuk membuat user baru dengan role tertentu (default admin)
+role = admin, spv, teknisi, pic(kemungkinan tidak dipakai)
+cara menggunakan = node scripts/seed-admin.js "Nama Lengkap" email@sig.co.id passwordnya [role]
+*/
+
 const bcrypt = require('bcrypt');
 const pool = require('../src/config/db');
-
 const VALID_ROLES = ['admin', 'spv', 'teknisi', 'pic'];
 
 async function main() {

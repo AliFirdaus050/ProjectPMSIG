@@ -1,8 +1,4 @@
--- Field tambahan untuk checklist Printer & Switch:
--- - firmware_series, consumable_type -> "Device Data" (Printer)
--- - ink_black/cyan/magenta/yellow -> "Stok Tinta" (Printer, free text)
--- - technician_notes -> kotak catatan bebas ("Teknisi Wajib Isi Catatan"),
---   ada di form Switch & Printer, tidak ada di form PC/Laptop
+-- tambahan untuk switch dan printer, tidak ada di pc/laptop
 
 DO $$ BEGIN
   CREATE TYPE consumable_type AS ENUM ('Ink type', 'Toner type', 'Ribbon type');

@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLog');
-
 const router = express.Router();
 
 // POST /api/v1/auth/login
@@ -19,8 +18,7 @@ router.post('/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.trim().toLowerCase()]);
     const user = result.rows[0];
 
-    // Pesan error sengaja digeneralisasi (tidak bilang "email tidak ditemukan" vs
-    // "password salah" secara terpisah) supaya tidak bocorin info akun mana yang terdaftar.
+    // biar tidak ketauan email atau password yg salah wkwkw
     if (!user) {
       return res.status(401).json({ message: 'Email atau password salah.' });
     }
@@ -63,10 +61,7 @@ router.post('/login', async (req, res) => {
 });
 
 // POST /api/v1/auth/logout
-// JWT bersifat stateless, jadi logout sepenuhnya jadi tanggung jawab client
-// (hapus token dari storage). Endpoint ini disediakan supaya frontend punya
-// tempat konsisten untuk memicu proses logout & bisa dikembangkan (misal token
-// blacklist) kalau nanti dibutuhkan.
+// pokoke buat log out
 router.post('/logout', authenticate, (req, res) => {
   logActivity({ userId: req.user.id, action: 'auth.logout', description: 'User logout dari sistem.', req });
   res.json({ message: 'Logout berhasil. Hapus token di sisi client.' });

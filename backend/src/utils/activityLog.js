@@ -1,8 +1,6 @@
-const pool = require('../config/db');
+// buat catat aktivitas ke tabel activity_logs
 
-// Helper buat catat aktivitas ke tabel activity_logs. Sengaja gak melempar
-// error kalau gagal insert — pencatatan log gak boleh sampai bikin request
-// utama (misal simpan checklist) ikut gagal.
+const pool = require('../config/db');
 async function logActivity({ userId, action, entityType, entityId, description, metadata, req }) {
   try {
     const ipAddress = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress) : null;

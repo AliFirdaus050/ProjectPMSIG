@@ -1,12 +1,13 @@
--- Tabel log aktivitas: jejak audit semua aksi penting di sistem, bisa diakses admin.
+-- tabel log aktivitas timeline (diakses admin dan spv)
+
 CREATE TABLE IF NOT EXISTS activity_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  action VARCHAR(60) NOT NULL,           -- misal 'auth.login', 'checklist.approve'
-  entity_type VARCHAR(40),               -- 'checklist', 'asset', 'schedule', 'user', 'signature'
-  entity_id UUID,                        -- polymorphic, tanpa FK constraint (bisa merujuk ke tabel manapun)
-  description TEXT,                      -- ringkasan yang enak dibaca manusia
-  metadata JSONB,                        -- data tambahan terstruktur (opsional)
+  action VARCHAR(60) NOT NULL, -- login, checklist, update, dll
+  entity_type VARCHAR(40), -- keterangan             
+  entity_id UUID,                   
+  description TEXT,                 
+  metadata JSONB,                       
   ip_address VARCHAR(45),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

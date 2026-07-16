@@ -3,14 +3,13 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLog');
-
 const router = express.Router();
 router.use(authenticate);
-router.use(authorize('admin', 'spv')); // seluruh endpoint di file ini: Admin & SPV (akses setara)
+router.use(authorize('admin', 'spv')); // admin dan spv punya kedudukan hampir sama
+const VALID_ROLES = ['admin', 'spv', 'teknisi', 'pic']; // pic dihapus tapi tetep ada (dihapus di opsii tok)
 
-const VALID_ROLES = ['admin', 'spv', 'teknisi', 'pic'];
-
-// GET /api/v1/users — list semua user, opsional filter role
+// GET /api/v1/users
+// list semua user dengan filter role
 router.get('/', async (req, res) => {
   const { role } = req.query;
   try {
@@ -25,7 +24,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/v1/users — bikin user baru
+// POST /api/v1/users
+// bikin user baru
 router.post('/', async (req, res) => {
   const { full_name, email, password, role } = req.body;
 
@@ -63,7 +63,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/v1/users/:id — edit full_name/email/role/is_active
+// PATCH /api/v1/users/:id
+// edit user
 router.patch('/:id', async (req, res) => {
   const { full_name, email, role, is_active } = req.body;
 
@@ -106,7 +107,8 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/users/:id/reset-password — Admin set ulang password user
+// POST /api/v1/users/:id/reset-password
+// admin set ulang password user
 router.post('/:id/reset-password', async (req, res) => {
   const { new_password } = req.body;
   if (!new_password || new_password.length < 6) {
@@ -138,9 +140,9 @@ router.post('/:id/reset-password', async (req, res) => {
   }
 });
 
-// --- PIC <-> Asset assignment ---
+// pic akan diabaikan
 
-// GET /api/v1/users/:id/pic-assets — list device tanggung jawab PIC ini
+// GET /api/v1/users/:id/pic-assets
 router.get('/:id/pic-assets', async (req, res) => {
   try {
     const result = await pool.query(
@@ -158,7 +160,7 @@ router.get('/:id/pic-assets', async (req, res) => {
   }
 });
 
-// POST /api/v1/users/:id/pic-assets — assign satu device ke PIC ini
+// POST /api/v1/users/:id/pic-assets
 router.post('/:id/pic-assets', async (req, res) => {
   const { asset_id } = req.body;
   if (!asset_id) {
@@ -180,7 +182,7 @@ router.post('/:id/pic-assets', async (req, res) => {
   }
 });
 
-// DELETE /api/v1/users/:id/pic-assets/:assetId — lepas assignment
+// DELETE /api/v1/users/:id/pic-assets/:assetId
 router.delete('/:id/pic-assets/:assetId', async (req, res) => {
   try {
     await pool.query(

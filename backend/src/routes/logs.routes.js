@@ -1,12 +1,13 @@
+//khsusus admin buat lihat log aktivitas
+
 const express = require('express');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
-
 const router = express.Router();
 router.use(authenticate);
-router.use(authorize('admin')); // seluruh endpoint di file ini khusus Admin
+router.use(authorize('admin'));
 
-// GET /api/v1/logs — daftar log aktivitas, dengan filter & pagination
+// GET /api/v1/logs
 router.get('/', async (req, res) => {
   const { user_id, action, date_from, date_to, page = 1, limit = 50 } = req.query;
 
@@ -63,7 +64,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/v1/logs/actions — daftar unique action yang pernah tercatat, buat isi dropdown filter
+// GET /api/v1/logs/actions
+// buat tandanya dia ngapain
 router.get('/actions', async (req, res) => {
   try {
     const result = await pool.query('SELECT DISTINCT action FROM activity_logs ORDER BY action');

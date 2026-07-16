@@ -1,6 +1,4 @@
-// Konfigurasi checklist per kategori device. Kategori ditentukan dari
-// assets.asset_name ("PC/Laptop", "Switch", "Printer") — BUKAN assets.category
-// (yang cuma sub-klasifikasi, misal "Desktop Computer"/"Laptop" untuk PC/Laptop).
+// checklist per kategori device dari asset_name
 
 const CHECKLIST_CONFIG = {
   'PC/Laptop': {
@@ -20,7 +18,7 @@ const CHECKLIST_CONFIG = {
         ],
       },
     ],
-    standardSoftware: [
+    standardSoftware: [ // checklist aplikasi apa ae sing dicek
       'Operating System - Windows 11 Pro',
       'Acrobat Reader',
       'SAP GUI',
@@ -67,8 +65,7 @@ const CHECKLIST_CONFIG = {
       {
         key: 'device_utilization',
         title: 'Device Utilization',
-        // Diisi Normal/Error + angka aktual di kolom Information (sesuai konfirmasi)
-        items: ['Processor (%)', 'Memory (%)', 'Temperature (°C)'],
+        items: ['Processor (%)', 'Memory (%)', 'Temperature (°C)'], // diisi normal/error + angka aktual
       },
     ],
     standardSoftware: null,
@@ -99,9 +96,9 @@ const CHECKLIST_CONFIG = {
     ],
     standardSoftware: null,
     hasAdditionalSoftware: false,
-    hasDeviceData: true, // firmware_series (teks) + consumable_type (dropdown)
-    consumableTypeOptions: ['Ink type', 'Toner type', 'Ribbon type'],
-    hasInkStock: true, // black, cyan, magenta, yellow — free text
+    hasDeviceData: true,
+    consumableTypeOptions: ['Ink type', 'Toner type', 'Ribbon type'], // dropdown jenis tinta
+    hasInkStock: true, // tinta diisi teks bebas
     hasTechnicianNotes: true,
     signatureBlocks: ['Person In Charge, SIG', 'PIC', 'Officer Preventive Maintenance'],
     hasPic: true,
@@ -112,7 +109,7 @@ function getChecklistConfig(assetName) {
   return CHECKLIST_CONFIG[assetName] || null;
 }
 
-// Semua device item lintas section (dipakai untuk validasi kelengkapan sebelum generate PDF, FR-4)
+// cek semua udah lengkap belum, klo udah lengkap baru generate pdf
 function getAllDeviceItems(assetName) {
   const config = getChecklistConfig(assetName);
   if (!config) return [];

@@ -1,7 +1,8 @@
+// memanggil puppeter untuk generate pdf
+
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
-
 const STORAGE_DIR = path.join(__dirname, '../../storage/checklists');
 
 function ensureStorageDir() {
