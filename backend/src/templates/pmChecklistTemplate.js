@@ -1,20 +1,21 @@
 // Template HTML untuk PDF checklist PM, mengikuti layout form fisik
-// (Bagian 9 PRD): header, data konfigurasi, tabel Check Device Functions,
-// tabel Standard Software 2 kolom, Additional Software 6 baris, Notes,
-// dan area tanda tangan (dikosongkan).
+// (Bagian 9 PRD): header, data konfigurasi, tabel terpisah untuk setiap section,
+// dan area tanda tangan yang disesuaikan.
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
 
 function checkbox(isChecked) {
-  return `<span class="checkbox">${isChecked ? '&#10003;' : ''}</span>`;
+  return `<div class="checkbox-box">${isChecked ? '&#10003;' : ''}</div>`;
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   const pad = (n) => String(n).padStart(2, '0');
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
 function formatIndonesianDate(date) {
+  if (!date) return '';
   const months = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -37,34 +38,53 @@ function buildChecklistHtml(checklist) {
     attachments, attachments_note,
   } = checklist;
 
-  const deviceRows = device_items.map((item) => `
+  // 1. Device Rows
+  const deviceRows = (device_items || []).map((item) => `
     <tr>
-      <td class="desc-cell">${item.item_name}</td>
-      <td class="check-cell">${checkbox(item.condition === 'normal')}</td>
-      <td class="check-cell">${checkbox(item.condition === 'error')}</td>
-      <td class="info-cell">${item.information || ''}</td>
+      <td class="empty-col"></td>
+      <td class="grid-cell">${item.item_name}</td>
+      <td class="grid-cell center">${checkbox(item.condition === 'normal')}</td>
+      <td class="grid-cell center">${checkbox(item.condition === 'error')}</td>
+      <td class="grid-cell">${item.information || ''}</td>
     </tr>
   `).join('');
 
-  const half = Math.ceil(software_items.length / 2);
+  // 2. Software Rows
+  const half = Math.ceil((software_items?.length || 0) / 2);
   const leftSoftware = software_items.slice(0, half);
   const rightSoftware = software_items.slice(half);
 
-  function softwareRow(item, index) {
-    return `
+  let softwareRows = '';
+  for (let i = 0; i < leftSoftware.length; i++) {
+    const left = leftSoftware[i];
+    const right = rightSoftware[i];
+    softwareRows += `
       <tr>
-        <td class="sw-name">${index + 1}. ${item.software_name}</td>
-        <td class="check-cell">${checkbox(item.is_available)}</td>
+        <td class="empty-col"></td>
+        <td class="grid-cell">${i + 1}. ${left.software_name}</td>
+        <td class="grid-cell center">${checkbox(left.is_available)}</td>
+        <td class="grid-cell">${right ? `${i + 1 + half}. ${right.software_name}` : ''}</td>
+        <td class="grid-cell center">${right ? checkbox(right.is_available) : ''}</td>
       </tr>
     `;
   }
 
-  const leftSoftwareRows = leftSoftware.map((item, i) => softwareRow(item, i)).join('');
-  const rightSoftwareRows = rightSoftware.map((item, i) => softwareRow(item, i + half)).join('');
+  // 3. Additional Software Rows
+  const add_sw = additional_software || [];
+  const additionalRowsData = Array.from({ length: 6 }, (_, i) => add_sw[i] || '');
+  const additionalLeft = additionalRowsData.slice(0, 3);
+  const additionalRight = additionalRowsData.slice(3, 6);
 
-  const additionalRows = Array.from({ length: 6 }, (_, i) => additional_software[i] || '');
-  const additionalLeft = additionalRows.slice(0, 3);
-  const additionalRight = additionalRows.slice(3, 6);
+  let additionalRowsHtml = '';
+  for (let i = 0; i < 3; i++) {
+    additionalRowsHtml += `
+      <tr>
+        <td class="empty-col"></td>
+        <td class="grid-cell">${i + 1}. ${additionalLeft[i]}</td>
+        <td class="grid-cell">${i + 4}. ${additionalRight[i]}</td>
+      </tr>
+    `;
+  }
 
   return `
 <!DOCTYPE html>
@@ -76,242 +96,374 @@ function buildChecklistHtml(checklist) {
   body {
     font-family: 'Helvetica', Arial, sans-serif;
     font-size: 11px;
-    color: #111827;
-    margin: 24px;
+    color: #000;
+    margin: 20px;
   }
-  h1.title {
+  
+  /* Layout Titles & Wrappers */
+  .main-title {
+    border: 2px solid black;
+    background-color: #E5E7EB;
+    font-weight: bold;
     text-align: center;
-    font-size: 16px;
-    margin-bottom: 16px;
-    letter-spacing: 0.5px;
+    padding: 6px;
+    font-size: 13px;
+    margin-bottom: 15px;
   }
+  .config-wrapper {
+    border: 2px solid black;
+    margin-bottom: 15px; /* Jarak disamakan dengan jarak kotak 1 dan 2 */
+    padding-bottom: 5px;
+  }
+  .main-wrapper {
+    border: 2px solid black;
+    margin-bottom: 10px; 
+  }
+
+  /* Top Config Section */
   .config-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 16px;
-    table-layout: fixed;
   }
   .config-table td {
-    padding: 4px 0;
+    padding: 5px 15px;
+    vertical-align: bottom;
+  }
+  .config-label-container {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .config-val {
+    border-bottom: 1px dashed black;
+    min-height: 16px;
+    padding-bottom: 2px;
+    font-size: 11px;
+  }
+  .config-lbl {
+    font-size: 10px;
+    font-style: italic;
+    margin-top: 3px;
+  }
+
+  /* Grid & Alignment Classes */
+  .header-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #E5E7EB;
+    border-bottom: 1px solid black;
+  }
+  .header-table th {
+    border: 1px solid black; /* Beri border penuh di setiap sel */
+    border-top: none; /* Agar tidak menumpuk dengan garis atas kotak utama */
+    padding: 5px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .header-table th:first-child {
+    border-left: none; /* Menyatu dengan garis kiri wrapper */
+  }
+  .header-table th:last-child {
+    border-right: none; /* Menyatu dengan garis kanan wrapper */
+  }
+
+  .title-table {
+    width: 96%; /* Diperkecil agar jarak kanan lebih lebar (sisa 4%) */
+    border-collapse: collapse;
+    margin-top: 12px; /* Menambahkan jarak atas untuk setiap kategori */
+    margin-bottom: 4px;
+  }
+  .title-table td {
+    font-weight: bold;
     font-size: 11px;
     vertical-align: top;
   }
-  .config-label {
-    color: #6B7280;
-    white-space: nowrap;
-    text-align: left;
-    padding-right: 4px;
-  }
-  .config-colon {
-    width: 8px;
-    padding: 0 !important;
-  }
-  .config-value {
-    font-weight: 600;
-    padding-left: 4px !important;
-  }
-  table.section-table {
-    width: 100%;
+
+  .content-table {
+    width: 96%; /* Disamakan dengan title-table */
     border-collapse: collapse;
-    margin-bottom: 14px;
+    margin-bottom: 12px; /* Menambahkan jarak bawah untuk setiap kategori */
   }
-  table.section-table th {
-    background: #1E293B;
-    color: white;
-    padding: 6px;
-    font-size: 11px;
+  .empty-col {
+    border: none;
+  }
+  .grid-cell {
+    border: 1px solid black;
+    padding: 2px 4px; /* Padding dipangkas agar tabel lebih rapat/pendek */
+    font-size: 10px;
+  }
+  /* Class border-right-none sudah dihapus */
+  .center {
     text-align: center;
-    border: 1px solid #1E293B;
   }
-  table.section-table td {
-    border: 1px solid #D1D5DB;
-    padding: 5px 8px;
-  }
-  .section-header-row td {
-    background: #F3F4F6;
-    font-weight: 700;
-  }
-  .desc-cell { width: 45%; }
-  .check-cell { width: 8%; text-align: center; }
-  .info-cell { width: 39%; }
-  .checkbox {
+
+  .checkbox-box {
+    width: 14px;
+    height: 14px;
+    border: 1px solid black;
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 1px solid #111827;
     text-align: center;
-    line-height: 12px;
-    font-size: 10px;
+    line-height: 14px;
+    font-size: 11px;
+    background: white;
   }
-  .software-columns {
-    display: flex;
-    gap: 12px;
-  }
-  .software-columns table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .software-columns td {
-    border: 1px solid #D1D5DB;
-    padding: 4px 6px;
-    font-size: 10.5px;
-  }
-  .sw-name { width: 85%; }
-  .additional-columns {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .additional-columns table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .additional-columns td {
-    border: 1px solid #D1D5DB;
-    padding: 4px 6px;
-    font-size: 10.5px;
-  }
+
+  /* Notes */
   .notes-box {
-    border: 1px solid #D1D5DB;
-    padding: 10px;
-    margin-bottom: 20px;
-    font-size: 11px;
+    margin: 8px 4% 25px 5.8%; 
+    border: 1px solid black;
+    padding: 5px 10px;
   }
-  .notes-box div { margin-bottom: 4px; }
-  .signatures {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 30px;
+
+  /* Signatures */
+  .signature-wrapper {
+    border-top: 2px solid black;
+    padding: 15px 10px 20px 10px; 
   }
-  .signature-block {
-    width: 30%;
+  .signature-table {
+    width: 100%;
     text-align: center;
     font-size: 11px;
+    border: none;
+    border-collapse: collapse;
   }
-  .signature-date-line {
-    padding-bottom: 3px;
-    margin-bottom: 4px;
-    font-size: 10px;
-    min-height: 12px;
-  }
-  .signature-label {
-    margin-bottom: 4px;
-    font-weight: 600;
-  }
-  .signature-image-slot {
-    height: 55px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+  .signature-table td {
+    border: none;
+    padding: 0;
   }
   .signature-image {
-    max-width: 130px;
-    max-height: 50px;
+    max-width: 120px;
+    max-height: 45px;
   }
-  .signature-line {
-    border-top: 1px dashed #111827;
-    margin-top: 4px;
-  }
-  .signature-name {
-    margin-top: 4px;
-    font-size: 10px;
-    color: #374151;
-  }
+
   ${attachmentStyles}
 </style>
 </head>
 <body>
-  <h1 class="title">CHECKLIST PREVENTIVE MAINTENANCE</h1>
+  
+  <div class="main-title">CHECKLIST PREVENTIVE MAINTENANCE</div>
 
-  <table class="config-table">
-    <colgroup>
-      <col style="width: 110px;">
-      <col style="width: 8px;">
-      <col style="width: 232px;">
-      <col style="width: 110px;">
-      <col style="width: 8px;">
-      <col style="width: auto;">
-    </colgroup>
-    <tr>
-      <td class="config-label">Date</td><td class="config-colon">:</td><td class="config-value">${formatDate(checklist_date)}</td>
-      <td class="config-label">Site</td><td class="config-colon">:</td><td class="config-value">${site}</td>
-    </tr>
-    <tr>
-      <td class="config-label">Device</td><td class="config-colon">:</td><td class="config-value">${asset_name}</td>
-      <td class="config-label">Merk/Type</td><td class="config-colon">:</td><td class="config-value">${model}</td>
-    </tr>
-    <tr>
-      <td class="config-label">ID Tagging Asset</td><td class="config-colon">:</td><td class="config-value">${asset_tag}</td>
-      <td class="config-label">Serial Number</td><td class="config-colon">:</td><td class="config-value">${serial_number}</td>
-    </tr>
-    <tr>
-      <td class="config-label">Location</td><td class="config-colon">:</td><td class="config-value" colspan="3">${detail_location || ''}</td>
-    </tr>
-  </table>
-
-  <table class="section-table">
-    <tr><th colspan="4">1. Check Device Functions</th></tr>
-  </table>
-  <table class="section-table">
-    <tr>
-      <th style="width:45%">Description</th>
-      <th style="width:8%">Normal</th>
-      <th style="width:8%">Error</th>
-      <th style="width:39%">Information</th>
-    </tr>
-    ${deviceRows}
-  </table>
-
-  <table class="section-table">
-    <tr><th colspan="1">2. Standard Software</th></tr>
-  </table>
-  <div class="software-columns">
-    <table>${leftSoftwareRows}</table>
-    <table>${rightSoftwareRows}</table>
-  </div>
-
-  <table class="section-table" style="margin-top: 14px;">
-    <tr><th colspan="1">3. Additional Software</th></tr>
-  </table>
-  <div class="additional-columns">
-    <table>
-      ${additionalLeft.map((val, i) => `<tr><td>${i + 1}. ${val}</td></tr>`).join('')}
+  <!-- CONFIGURATIONS BOX -->
+  <div class="config-wrapper">
+    <table class="config-table">
+      <colgroup>
+        <col style="width: 33.33%;">
+        <col style="width: 33.33%;">
+        <col style="width: 33.33%;">
+      </colgroup>
+      <tr>
+        <td style="padding-top: 15px;">
+          <!-- Diubah menjadi block dan text-center agar lebarnya sejajar persis dengan titik-titik Device -->
+          <div style="border: 1px solid black; display: block; text-align: center; padding: 3px 0; background-color: #E5E7EB; font-weight: bold; font-size: 10px;">
+            Configurations Items
+          </div>
+        </td>
+        <!-- Menggunakan colspan="2" agar membentang lurus hingga ke ujung titik-titik Site -->
+        <td colspan="2" style="padding-top: 15px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <!-- Dibagi 50% 50% agar pembatas tengahnya jatuh tepat di antara kolom ID dan Site -->
+              <td style="width: 50%; border: 1px solid black; background-color: #E5E7EB; text-align: center; font-weight: bold; padding: 3px;">Date</td>
+              <td style="width: 50%; border: 1px solid black; text-align: center; padding: 3px;">${formatDate(checklist_date)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${asset_name || ''}</div>
+            <div class="config-lbl">Device</div>
+          </div>
+        </td>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${asset_tag || ''}</div>
+            <div class="config-lbl">ID Tagging Asset</div>
+          </div>
+        </td>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${site || ''}</div>
+            <div class="config-lbl">Site</div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${model || ''}</div>
+            <div class="config-lbl">Merk/Type</div>
+          </div>
+        </td>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${serial_number || ''}</div>
+            <div class="config-lbl">Serial Number</div>
+          </div>
+        </td>
+        <td>
+          <div class="config-label-container">
+            <div class="config-val">${detail_location || ''}</div>
+            <div class="config-lbl">Location</div>
+          </div>
+        </td>
+      </tr>
     </table>
-    <table>
-      ${additionalRight.map((val, i) => `<tr><td>${i + 4}. ${val}</td></tr>`).join('')}
+  </div>
+
+  <!-- MAIN CONTENT BOX -->
+  <div class="main-wrapper">
+    
+    <!-- HEADER -->
+    <table class="header-table">
+      <colgroup>
+        <col style="width: 6%;">  <!-- Item -->
+        <col style="width: 38%;"> <!-- Description -->
+        <col style="width: 10%;"> <!-- Normal -->
+        <col style="width: 10%;"> <!-- Error -->
+        <col style="width: 36%;"> <!-- Information -->
+      </colgroup>
+      <tr>
+        <th rowspan="2">Item</th>
+        <th rowspan="2">Description</th>
+        <th colspan="2" style="border-bottom: 1px solid black;">Condition</th>
+        <th rowspan="2">Information</th>
+      </tr>
+      <tr>
+        <th>Normal</th>
+        <th>Error</th>
+      </tr>
     </table>
-  </div>
 
-  <div class="notes-box">
-    <strong>Notes</strong>
-    <div>Hostname : ${hostname_note || ''}</div>
-    <div>IP Address : ${ip_address || ''}</div>
-    <div>MAC Address : ${mac_address || ''}</div>
-  </div>
+    <!-- 1. CHECK DEVICE FUNCTIONS -->
+    <table class="title-table">
+      <colgroup>
+        <col style="width: 6%;">
+        <col style="width: 94%;">
+      </colgroup>
+      <tr>
+        <td style="text-align: center;">1.</td>
+        <td>Check Device Functions</td>
+      </tr>
+    </table>
+    <table class="content-table" style="table-layout: fixed;">
+      <colgroup>
+        <!-- Persentase dihitung ulang secara presisi untuk tabel lebar 96% -->
+        <col style="width: 6.25%;">
+        <col style="width: 39.58%;">
+        <col style="width: 10.42%;">
+        <col style="width: 10.42%;">
+        <col style="width: 33.33%;">
+      </colgroup>
+      ${deviceRows}
+    </table>
 
-  <div class="signatures">
-    <div class="signature-block">
-      <div class="signature-date-line">${spv_approved_at ? `Tuban, ${formatIndonesianDate(new Date(spv_approved_at))}` : '&nbsp;'}</div>
-      <div class="signature-label">IT Site Operations</div>
-      <div class="signature-image-slot">${signatureImgOrBlank(spv_signature)}</div>
-      <div class="signature-line"></div>
-      ${spv_name ? `<div class="signature-name">${spv_name}</div>` : ''}
+    <!-- 2. STANDARD SOFTWARE -->
+    <table class="title-table">
+      <colgroup>
+        <col style="width: 6%;">
+        <col style="width: 94%;">
+      </colgroup>
+      <tr>
+        <td style="text-align: center;">2.</td>
+        <td>Standard Software</td>
+      </tr>
+    </table>
+    <table class="content-table">
+      <colgroup>
+        <col style="width: 6%;">
+        <col style="width: 42%;"> <!-- Kolom Kiri -->
+        <col style="width: 5%;">  <!-- Checkbox Kiri -->
+        <col style="width: 42%;"> <!-- Kolom Kanan -->
+        <col style="width: 5%;">  <!-- Checkbox Kanan -->
+      </colgroup>
+      ${softwareRows}
+    </table>
+
+    <!-- 3. ADDITIONAL SOFTWARE -->
+    <table class="title-table">
+      <colgroup>
+        <col style="width: 6%;">
+        <col style="width: 94%;">
+      </colgroup>
+      <tr>
+        <td style="text-align: center;">3.</td>
+        <td>Additional Software</td>
+      </tr>
+    </table>
+    <table class="content-table">
+      <colgroup>
+        <col style="width: 6%;">
+        <col style="width: 47%;">
+        <col style="width: 47%;">
+      </colgroup>
+      ${additionalRowsHtml}
+    </table>
+
+    <!-- NOTES SECTION -->
+    <div class="notes-box">
+      <div style="font-weight: bold; margin-bottom: 4px;">Notes</div>
+      <table style="width: 100%; font-size: 11px; border: none; border-collapse: collapse;">
+        <tr>
+          <td style="width: 75px; border: none; padding: 2px 0;">Hostname</td>
+          <td style="width: 10px; border: none; padding: 2px 0;">:</td>
+          <td style="border: none; padding: 2px 0;">${hostname_note || ''}</td>
+        </tr>
+        <tr>
+          <td style="border: none; padding: 2px 0;">IP Address</td>
+          <td style="border: none; padding: 2px 0;">:</td>
+          <td style="border: none; padding: 2px 0;">${ip_address || ''}</td>
+        </tr>
+        <tr>
+          <td style="border: none; padding: 2px 0;">MAC Address</td>
+          <td style="border: none; padding: 2px 0;">:</td>
+          <td style="border: none; padding: 2px 0;">${mac_address || ''}</td>
+        </tr>
+      </table>
     </div>
-    <div class="signature-block">
-      <div class="signature-date-line">&nbsp;</div>
-      <div class="signature-label">User</div>
-      <div class="signature-image-slot">${signatureImgOrBlank(pic_signature)}</div>
-      <div class="signature-line"></div>
-      ${pic_name ? `<div class="signature-name">${pic_name}</div>` : ''}
+
+    <!-- SIGNATURES FOOTER -->
+    <div class="signature-wrapper">
+      <table class="signature-table">
+        <tr>
+          <td style="width: 33%;"></td>
+          <td style="width: 33%;"></td>
+          <td style="width: 33%;">
+            <div style="width: 100%; margin: 0 auto 5px auto; height: 14px; text-align: center;">
+              Tuban, ${formatIndonesianDate(new Date())}
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>IT Site Operations</td>
+          <td>User</td>
+          <td>Technician</td>
+        </tr>
+        <tr>
+          <td style="height: 60px; vertical-align: bottom; padding: 0 15px;">
+            <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
+              ${signatureImgOrBlank(spv_signature)}
+            </div>
+            <div style="margin-top: 4px;">${spv_name || ''}</div>
+          </td>
+          <td style="height: 60px; vertical-align: bottom; padding: 0 15px;">
+            <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
+              ${signatureImgOrBlank(pic_signature)}
+            </div>
+            <div style="margin-top: 4px;">${pic_name || ''}</div>
+          </td>
+          <td style="height: 60px; vertical-align: bottom; padding: 0 15px;">
+            <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
+              ${signatureImgOrBlank(technician_signature)}
+            </div>
+            <div style="margin-top: 4px;">${technician_name || ''}</div>
+          </td>
+        </tr>
+      </table>
     </div>
-    <div class="signature-block">
-      <div class="signature-date-line">Tuban, ${formatIndonesianDate(new Date())}</div>
-      <div class="signature-label">Technician</div>
-      <div class="signature-image-slot">${signatureImgOrBlank(technician_signature)}</div>
-      <div class="signature-line"></div>
-      ${technician_name ? `<div class="signature-name">${technician_name}</div>` : ''}
-    </div>
-  </div>
+
+  </div> <!-- End of main-wrapper -->
+  
   ${buildAttachmentsHtml(attachments, attachments_note)}
 </body>
 </html>
