@@ -208,16 +208,6 @@ function buildPrinterChecklistHtml(checklist) {
   .signature-table td { border: none; padding: 0; }
   .signature-image { max-width: 120px; max-height: 45px; }
 
-  h1.title {
-    text-align: center;
-    font-size: 13px;
-    font-weight: bold;
-    border: 2px solid black;
-    background-color: #E5E7EB;
-    padding: 6px;
-    margin: 0 0 15px 0;
-  }
-
   ${attachmentStyles}
 </style>
 </head>
