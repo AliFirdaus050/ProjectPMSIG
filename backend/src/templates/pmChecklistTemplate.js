@@ -42,7 +42,7 @@ function buildChecklistHtml(checklist) {
   const deviceRows = (device_items || []).map((item) => `
     <tr>
       <td class="empty-col"></td>
-      <td class="grid-cell">${item.item_name}</td>
+      <td class="grid-cell" style="background-color: #f5f5f5;">${item.item_name}</td>
       <td class="grid-cell center">${checkbox(item.condition === 'normal')}</td>
       <td class="grid-cell center">${checkbox(item.condition === 'error')}</td>
       <td class="grid-cell">${item.information || ''}</td>
