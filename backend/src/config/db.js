@@ -1,6 +1,8 @@
-// Koneksi PostgreSQL menggunakan connection pool (pg)
-// Best practice: satu DATABASE_URL, bukan variabel host/port/user terpisah,
-// supaya gampang dipindah antar environment (local/staging/production).
+/*
+koneksi untuk postgreesql menggunakan connection pool
+hanya ada satu database agar gampang dipindah antar environment
+*/
+
 const { Pool } = require('pg');
 require('dotenv').config();
 

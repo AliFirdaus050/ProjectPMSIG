@@ -5,10 +5,8 @@ const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLog');
 const { getPeriodForDate, getNextPeriod, getPeriodsList, formatPeriodLabel } = require('../utils/period');
-
 const router = express.Router();
 router.use(authenticate);
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 function normalizeHeader(h) {
@@ -19,14 +17,16 @@ function normalizeSerial(serial) {
   return String(serial || '').trim().toUpperCase();
 }
 
-// GET /api/v1/schedules/period-info — info periode berjalan & periode berikutnya
+// GET /api/v1/schedules/period-info
+// info periode yg berjalan dan periode selanjutnya
 router.get('/period-info', (req, res) => {
   const current = getPeriodForDate();
   const next = getNextPeriod();
   res.json({ current, next });
 });
 
-// GET /api/v1/schedules/periods — daftar 12 periode ke depan + status upload
+// GET /api/v1/schedules/periods
+// memunculkan 12 periode kedepan dan status uploadnya (sudah diupload / belum diupload)
 router.get('/periods', async (req, res) => {
   try {
     const periods = getPeriodsList(12);
@@ -57,8 +57,7 @@ router.get('/periods', async (req, res) => {
   }
 });
 
-// Mapping teks "Kategori Perangkat" di Excel -> asset_name di database.
-// Kategori di luar daftar ini (Perangkat Vicon, UPS, dll) diabaikan/skip.
+// mapping kategori di excel scheddule, selain kategori dibawah ini maka di skip/diabaikan
 const CATEGORY_MAP = {
   'desktop komputer / laptop': 'PC/Laptop',
   'desktop komputer/laptop': 'PC/Laptop',
@@ -76,10 +75,10 @@ const CATEGORY_MAP = {
   'switch': 'Switch'
 };
 
-// POST /api/v1/schedules/upload — upload jadwal PM
-// Format Excel: No | Kategori Perangkat | PIC | Lokasi | Perangkat | Serial Number | Hostname | Keterangan
-// Hanya baris dengan Keterangan = "Bulanan" yang diproses; "Harian" diabaikan.
-// Hanya teknisi & admin yang boleh upload (sesuai daftar akses menu).
+// POST /api/v1/schedules/upload
+// buat upload jadwal pm, hanya ambil baris yg keterangannya bulanan, yang harian di ski[]
+// format excel = no, kategori perangkat, pic, lokasi, perangkat, serial number, hostname, keterangan
+
 router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'File Excel wajib diunggah.' });
@@ -88,14 +87,9 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
   const periodKey = req.body.period_key || getNextPeriod().periodKey;
 
   try {
-    //const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    //const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    //const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
     const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
     const headerKeywords = ['kategori perangkat', 'pic', 'lokasi', 'serial number', 'hostname'];
 
     let headerRowIndex = -1;
@@ -142,18 +136,15 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
 
     console.log('DEBUG - total baris sebelum filter:', rows.length);
     console.log('DEBUG - total baris valid sesudah filter:', validRows.length);
-
-    //const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    //const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    //const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
     console.log('DEBUG - Header kolom terdeteksi:', rows.length > 0 ? Object.keys(rows[0]) : 'Tidak ada baris data');
 
     const matched = [];
     const unmatched = [];
     let skippedDaily = 0;
     let skippedCategory = 0;
-    const categoryBreakdown = {}; // { 'Perangkat Vicon': { total: 13, supported: false }, ... }
+    const categoryBreakdown = {};
+
+    // untuk breakdown kategori apa aja
 
     for (const row of validRows) {
       const mapped = {};
@@ -169,9 +160,6 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
       }
 
       if (!mapped.serial_number) continue; // baris kosong total, skip
-
-      // Catat setiap kategori yang ketemu di file, terlepas nanti diproses atau di-skip,
-      // supaya kelihatan jelas kategori apa aja yang ada di file dan mana yang didukung sistem.
       const catLabel = mapped.kategori_perangkat || '(Tanpa Kategori)';
       const isSupported = !!CATEGORY_MAP[normalizeHeader(catLabel)];
       if (!categoryBreakdown[catLabel]) {
@@ -179,13 +167,11 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
       }
       categoryBreakdown[catLabel].total += 1;
 
-      // Cuma proses jadwal Bulanan
-      if (mapped.keterangan !== 'Bulanan') {
+      if (mapped.keterangan !== 'Bulanan') { // handle kategori bulanan
         skippedDaily += 1;
         continue;
       }
 
-      // Cuma proses 3 kategori yang dipakai sistem ini
       const normalizedCategory = normalizeHeader(mapped.kategori_perangkat);
       const mappedAssetName = CATEGORY_MAP[normalizedCategory];
       if (!mappedAssetName) {
@@ -193,8 +179,7 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
         continue;
       }
 
-      // Cocokkan ke aset existing berdasarkan serial_number (satu-satunya kunci,
-      // file jadwal ini tidak punya kolom Asset Tag)
+      // dicocokan dengan serial number
       const assetResult = await pool.query(
         'SELECT id, asset_name, asset_tag, serial_number FROM assets WHERE serial_number = $1',
         [mapped.serial_number]
@@ -245,9 +230,8 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
   }
 });
 
-// DELETE /api/v1/schedules?period_key=2026-07 — hapus semua jadwal yang sudah
-// diupload untuk 1 periode (khusus admin, buat benerin salah upload/duplikat).
-// Tidak menghapus asset atau checklist, cuma baris di pm_schedules.
+// DELETE /api/v1/schedules?period_key=2026-07 
+// menghapus semua jadwal yg udah di upload (cm bisa admin) buat benerin salah upload/duplikat
 router.delete('/', authorize('admin'), async (req, res) => {
   const periodKey = req.query.period_key;
   if (!periodKey) {
@@ -271,7 +255,8 @@ router.delete('/', authorize('admin'), async (req, res) => {
   }
 });
 
-// GET /api/v1/schedules?period_key=2026-07 — list device di jadwal periode tertentu
+// GET /api/v1/schedules?period_key=2026-07
+// list device di jadwal tertentu
 router.get('/', async (req, res) => {
   const periodKey = req.query.period_key || getPeriodForDate().periodKey;
 
@@ -292,9 +277,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/v1/schedules/check/:assetId — cek apakah aset ada di jadwal periode berjalan
-// Dipakai frontend sebelum munculin tombol "Lanjut ke Checklist" (validasi dini,
-// validasi sebenarnya tetap di backend saat POST /checklists).
+// GET /api/v1/schedules/check/:assetId
+// mengecek apakah asset id ada di jadwal periode yg lagi jalan
 router.get('/check/:assetId', async (req, res) => {
   const periodKey = getPeriodForDate().periodKey;
   try {
@@ -310,7 +294,7 @@ router.get('/check/:assetId', async (req, res) => {
 });
 
 // GET /api/v1/schedules/tracker?period_key=2026-06
-// Status device dalam periode: belum_pm / draft / pending_approval / approved
+// melihat status device dalam periode (blm pm, draft, pending approve, aprrove)
 router.get('/tracker', async (req, res) => {
   const periodKey = req.query.period_key || getPeriodForDate().periodKey;
   const conditions = ['ps.period_key = $1'];

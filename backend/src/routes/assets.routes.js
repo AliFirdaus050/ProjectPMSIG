@@ -2,7 +2,6 @@ const express = require('express');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLog');
-
 const router = express.Router();
 router.use(authenticate);
 
@@ -95,7 +94,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/v1/assets — list untuk halaman Edit Database Device, dengan search & pagination
+// GET /api/v1/assets
+// list halaman edit database device dengan page
 router.get('/', async (req, res) => {
   const page = Math.max(parseInt(req.query.page) || 1, 1);
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
@@ -135,8 +135,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PATCH /api/v1/assets/:id — edit data device (halaman Edit Database Device)
-// Dibatasi: Teknisi, SPV, Admin (bukan PIC).
+// PATCH /api/v1/assets/:id 
 router.patch('/:id', authorize('teknisi', 'spv', 'admin'), async (req, res) => {
   const { asset_name, asset_tag, serial_number, model, category, kategori, hostname, detail_location } = req.body;
 
@@ -181,14 +180,12 @@ router.patch('/:id', authorize('teknisi', 'spv', 'admin'), async (req, res) => {
   }
 });
 
-// DELETE /api/v1/assets/:id — hapus device (cascade: checklist & jadwal terkait ikut terhapus)
+// DELETE /api/v1/assets/:id 
+// hapus device, checklist dan jadwal juga terhapus
 router.delete('/:id', authorize('teknisi', 'spv', 'admin'), async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    // Hapus manual dulu karena pm_checklists tidak pakai ON DELETE CASCADE ke assets
-    // (child table checklist_device_items dll sudah cascade dari pm_checklists sendiri)
     await client.query('DELETE FROM pm_checklists WHERE asset_id = $1', [req.params.id]);
     await client.query('DELETE FROM pm_schedules WHERE asset_id = $1', [req.params.id]);
     await client.query('DELETE FROM pic_assets WHERE asset_id = $1', [req.params.id]);

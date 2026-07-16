@@ -1,3 +1,5 @@
+-- pic asset (15  Juli dibatalkan)
+
 CREATE TABLE IF NOT EXISTS pic_assets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pic_user_id UUID NOT NULL REFERENCES users(id),

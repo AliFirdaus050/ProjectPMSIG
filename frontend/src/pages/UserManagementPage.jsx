@@ -22,6 +22,12 @@ export default function UserManagementPage() {
   const [assetSearch, setAssetSearch] = useState('');
   const [assetSearchResult, setAssetSearchResult] = useState(null);
 
+  // Untuk reset password user
+  const [resetPasswordUserId, setResetPasswordUserId] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetSaving, setResetSaving] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
+
   async function loadUsers() {
     setLoading(true);
     setError('');
@@ -115,6 +121,28 @@ export default function UserManagementPage() {
         setPicAssets(data);
     } catch (err) {
         setError(err.message);
+    }
+  }
+
+  function openResetPassword(user) {
+    setResetPasswordUserId(user.id);
+    setNewPassword('');
+    setResetMessage('');
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault();
+    setError('');
+    setResetMessage('');
+    setResetSaving(true);
+    try {
+      await api.post(`/users/${resetPasswordUserId}/reset-password`, { new_password: newPassword });
+      setResetMessage('Password berhasil direset.');
+      setNewPassword('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setResetSaving(false);
     }
   }
 
@@ -216,11 +244,16 @@ export default function UserManagementPage() {
                   </button>
                 </td>
                 <td className="p-3">
-                  {u.role === 'pic' && (
-                    <button onClick={() => openPicAssets(u)} className="text-primary dark:text-blue-300 underline text-xs">
-                      Atur Device
+                  <div className="flex items-center gap-3">
+                    {u.role === 'pic' && (
+                      <button onClick={() => openPicAssets(u)} className="text-primary dark:text-blue-300 underline text-xs">
+                        Atur Device
+                      </button>
+                    )}
+                    <button onClick={() => openResetPassword(u)} className="text-primary dark:text-blue-300 underline text-xs">
+                      Reset Password
                     </button>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -273,6 +306,37 @@ export default function UserManagementPage() {
           {assetSearchResult && assetSearchResult.length === 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Aset tidak ditemukan.</p>
           )}
+        </div>
+      )}
+      {resetPasswordUserId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-5 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+                Reset Password: {users.find((u) => u.id === resetPasswordUserId)?.full_name}
+              </h2>
+              <button onClick={() => setResetPasswordUserId(null)} className="text-sm text-gray-500 dark:text-gray-400">Tutup</button>
+            </div>
+            {resetMessage && <div className="bg-status-normal/10 text-status-normal text-sm rounded p-2 mb-3">{resetMessage}</div>}
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              <input
+                type="password"
+                placeholder="Password Baru (min. 6 karakter)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={resetSaving}
+                className="w-full bg-primary hover:bg-primary-dark text-white rounded py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {resetSaving ? 'Menyimpan...' : 'Reset Password'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -1,3 +1,5 @@
+-- tabel jadwal pm
+
 CREATE TABLE IF NOT EXISTS pm_schedules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   period_key VARCHAR(7) NOT NULL,

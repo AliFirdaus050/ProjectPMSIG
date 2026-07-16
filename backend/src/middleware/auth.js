@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-// Memastikan request punya token JWT valid, lalu attach req.user = { id, role }
 function authenticate(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -18,7 +17,6 @@ function authenticate(req, res, next) {
   }
 }
 
-// Membatasi endpoint hanya untuk role tertentu, contoh: authorize('it_site_operations')
 function authorize(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {

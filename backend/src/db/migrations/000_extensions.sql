@@ -1,2 +1,3 @@
--- Extension untuk generate UUID (gen_random_uuid)
+-- extension untuk generate uid
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

@@ -1,7 +1,4 @@
-// Halaman kedua PDF (opsional): lampiran foto PM.
-// `attachments` = array baris, tiap baris { cells: [{image, caption}, ...] } (1 atau 2 cells).
-// Kalau attachments kosong DAN attachments_note kosong, fungsi ini return string kosong
-// sehingga tidak menambah halaman sama sekali.
+// handle lampiran (halaman kedua pada pdf) bersifat opsional, bisa ada bisa gak
 
 function escapeHtml(str) {
   return String(str || '')
@@ -50,7 +47,6 @@ function buildAttachmentsHtml(attachments, attachmentsNote) {
   `;
 }
 
-// CSS tambahan dipakai bareng style existing tiap template (di-append ke <style> masing-masing).
 const attachmentStyles = `
   table.attachment-table {
     width: 100%;

@@ -1,4 +1,5 @@
--- Enum types dipakai di beberapa tabel
+-- enum types dipakai pada bbrapa tabeel
+
 DO $$ BEGIN
   CREATE TYPE user_role AS ENUM ('teknisi', 'it_site_operations');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

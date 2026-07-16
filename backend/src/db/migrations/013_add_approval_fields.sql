@@ -1,3 +1,5 @@
+-- tabel handle kolom approve spv
+
 ALTER TYPE checklist_status ADD VALUE IF NOT EXISTS 'approved';
 
 ALTER TABLE pm_checklists

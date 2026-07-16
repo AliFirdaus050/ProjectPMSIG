@@ -6,8 +6,8 @@ const { logActivity } = require('../utils/activityLog');
 const router = express.Router();
 router.use(authenticate);
 
-// GET /api/v1/signatures/me — ambil tanda tangan tersimpan milik user yang login
-// (utamanya dipakai SPV, supaya tanda tangan otomatis muncul tiap approve).
+// GET /api/v1/signatures/me
+// ambil tanda tangan yang tersimpan milik user yg login
 router.get('/me', async (req, res) => {
   try {
     const result = await pool.query(
@@ -24,7 +24,8 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// PUT /api/v1/signatures/me — simpan/update tanda tangan milik user yang login
+// PUT /api/v1/signatures/me
+// simpan/update tanda tangan milik user yang login
 router.put('/me', async (req, res) => {
   const { signature_data } = req.body;
   if (!signature_data) {
