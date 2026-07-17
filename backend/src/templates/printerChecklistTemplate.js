@@ -7,6 +7,7 @@
 // PENTING: file ini HANYA mengubah tampilan/layout HTML->PDF. Logika data
 // (field apa yang dipakai) tidak diubah.
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
+const { escapeHtml } = require('./templateHelpers');
 
 function checkbox(isChecked) {
   return `<div class="checkbox-box">${isChecked ? '&#10003;' : ''}</div>`;
@@ -331,8 +332,8 @@ function buildPrinterChecklistHtml(checklist) {
         <col style="width: 39.58%;">
         <col style="width: 54.17%;">
       </colgroup>
-      <tr><td class="empty-col"></td><td class="label-col">Firmware series</td><td>${firmware_series || ''}</td></tr>
-      <tr><td class="empty-col"></td><td class="label-col">Ink/Toner/Ribbon type</td><td>${consumable_type || ''}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Firmware series</td><td>${escapeHtml(firmware_series)}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Ink/Toner/Ribbon type</td><td>${escapeHtml(consumable_type)}</td></tr>
     </table>
 
     <!-- 3. STOK TINTA -->
@@ -346,10 +347,10 @@ function buildPrinterChecklistHtml(checklist) {
         <col style="width: 39.58%;">
         <col style="width: 54.17%;">
       </colgroup>
-      <tr><td class="empty-col"></td><td class="label-col">Black</td><td>${ink_black || ''}</td></tr>
-      <tr><td class="empty-col"></td><td class="label-col">Cyan</td><td>${ink_cyan || ''}</td></tr>
-      <tr><td class="empty-col"></td><td class="label-col">Magenta</td><td>${ink_magenta || ''}</td></tr>
-      <tr><td class="empty-col"></td><td class="label-col">Yellow</td><td>${ink_yellow || ''}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Black</td><td>${escapeHtml(ink_black)}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Cyan</td><td>${escapeHtml(ink_cyan)}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Magenta</td><td>${escapeHtml(ink_magenta)}</td></tr>
+      <tr><td class="empty-col"></td><td class="label-col">Yellow</td><td>${escapeHtml(ink_yellow)}</td></tr>
     </table>
 
     <!-- NOTES -->

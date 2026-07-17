@@ -1,7 +1,7 @@
 // servernya
-
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 const pool = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
@@ -12,7 +12,10 @@ const signaturesRoutes = require('./routes/signatures.routes');
 const usersRoutes = require('./routes/users.routes');
 const logsRoutes = require('./routes/logs.routes');
 const app = express();
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL?.split(','),
+}));
 app.use(express.json({ limit: '30mb' }));
 
 app.get('/api/v1/health', async (req, res) => {
@@ -21,7 +24,7 @@ app.get('/api/v1/health', async (req, res) => {
     res.json({ status: 'ok', database: 'connected', server_time: result.rows[0].server_time });
   } catch (err) {
     console.error('Health check gagal:', err.message);
-    res.status(500).json({ status: 'error', database: 'disconnected', message: err.message });
+    res.status(500).json({ status: 'error', database: 'disconnected' });
   }
 });
 

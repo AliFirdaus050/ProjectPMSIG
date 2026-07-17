@@ -1,13 +1,26 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLog');
 const router = express.Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+  const email = (req.body?.email || '').trim().toLowerCase();
+  return `${ipKeyGenerator(req.ip)}:${email}`;
+  },
+  message: { message: 'Terlalu banyak percobaan login. Coba lagi dalam beberapa menit.' },
+});
+
 // POST /api/v1/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {

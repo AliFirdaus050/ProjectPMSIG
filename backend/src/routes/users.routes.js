@@ -8,6 +8,23 @@ router.use(authenticate);
 router.use(authorize('admin', 'spv')); // admin dan spv punya kedudukan hampir sama
 const VALID_ROLES = ['admin', 'spv', 'teknisi', 'pic']; // pic dihapus tapi tetep ada (dihapus di opsii tok)
 
+// minimal 8 karakter, harus ada huruf besar, huruf kecil, dan angka
+function validatePasswordStrength(password) {
+  if (!password || password.length < 8) {
+    return 'Password minimal 8 karakter.';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password harus mengandung minimal 1 huruf besar.';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password harus mengandung minimal 1 huruf kecil.';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password harus mengandung minimal 1 angka.';
+  }
+  return null; // null berarti lolos validasi
+}
+
 // GET /api/v1/users
 // list semua user dengan filter role
 router.get('/', async (req, res) => {
@@ -34,6 +51,10 @@ router.post('/', async (req, res) => {
   }
   if (!VALID_ROLES.includes(role)) {
     return res.status(400).json({ message: `Role tidak valid. Harus salah satu dari: ${VALID_ROLES.join(', ')}` });
+  }
+  const passwordError = validatePasswordStrength(password);
+  if (passwordError) {
+    return res.status(400).json({ message: passwordError });
   }
 
   try {
@@ -111,8 +132,9 @@ router.patch('/:id', async (req, res) => {
 // admin set ulang password user
 router.post('/:id/reset-password', async (req, res) => {
   const { new_password } = req.body;
-  if (!new_password || new_password.length < 6) {
-    return res.status(400).json({ message: 'Password baru minimal 6 karakter.' });
+  const passwordError = validatePasswordStrength(new_password);
+  if (passwordError) {
+    return res.status(400).json({ message: passwordError });
   }
 
   try {

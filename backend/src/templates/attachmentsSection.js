@@ -5,13 +5,7 @@
 // ubah di sini saja untuk konsisten di ketiganya, tanpa perlu sentuh
 // template checklist utama masing-masing.
 
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+const { escapeHtml } = require('./templateHelpers');
 
 function buildAttachmentsHtml(attachments, attachmentsNote) {
   const rows = Array.isArray(attachments) ? attachments.filter((r) => r && Array.isArray(r.cells) && r.cells.length) : [];

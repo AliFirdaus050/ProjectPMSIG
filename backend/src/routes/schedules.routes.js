@@ -7,7 +7,10 @@ const { logActivity } = require('../utils/activityLog');
 const { getPeriodForDate, getNextPeriod, getPeriodsList, formatPeriodLabel } = require('../utils/period');
 const router = express.Router();
 router.use(authenticate);
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // maks 5MB per file
+});
 
 function normalizeHeader(h) {
   return String(h || '').trim().toLowerCase();
@@ -112,8 +115,6 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
     });
     }
 
-    console.log('DEBUG - header ketemu di baris index:', headerRowIndex);
-
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', range: headerRowIndex });
 
     const fillableColumns = ['Keterangan', 'Kategori Perangkat', 'Lokasi', 'PIC'];
@@ -133,10 +134,6 @@ router.post('/upload', authorize('teknisi', 'admin'), upload.single('file'), asy
     const noValue = String(row['No'] || '').trim();
     return /^\d+$/.test(noValue);
     });
-
-    console.log('DEBUG - total baris sebelum filter:', rows.length);
-    console.log('DEBUG - total baris valid sesudah filter:', validRows.length);
-    console.log('DEBUG - Header kolom terdeteksi:', rows.length > 0 ? Object.keys(rows[0]) : 'Tidak ada baris data');
 
     const matched = [];
     const unmatched = [];
@@ -336,6 +333,16 @@ router.get('/tracker', async (req, res) => {
     console.error('Tracker error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
   }
+});
+
+router.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ message: 'Ukuran file terlalu besar. Maksimal 5MB.' });
+    }
+    return res.status(400).json({ message: `Upload error: ${err.message}` });
+  }
+  next(err);
 });
 
 module.exports = router;

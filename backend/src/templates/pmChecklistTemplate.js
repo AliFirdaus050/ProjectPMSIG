@@ -2,6 +2,7 @@
 // (Bagian 9 PRD): header, data konfigurasi, tabel terpisah untuk setiap section,
 // dan area tanda tangan yang disesuaikan.
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
+const { escapeHtml } = require('./templateHelpers');
 
 function checkbox(isChecked) {
   return `<div class="checkbox-box">${isChecked ? '&#10003;' : ''}</div>`;
@@ -42,10 +43,10 @@ function buildChecklistHtml(checklist) {
   const deviceRows = (device_items || []).map((item) => `
     <tr>
       <td class="empty-col"></td>
-      <td class="grid-cell" style="background-color: #f5f5f5;">${item.item_name}</td>
+      <td class="grid-cell" style="background-color: #f5f5f5;">${escapeHtml(item.item_name)}</td>
       <td class="grid-cell center">${checkbox(item.condition === 'normal')}</td>
       <td class="grid-cell center">${checkbox(item.condition === 'error')}</td>
-      <td class="grid-cell">${item.information || ''}</td>
+      <td class="grid-cell">${escapeHtml(item.information)}</td>
     </tr>
   `).join('');
 
@@ -61,9 +62,9 @@ function buildChecklistHtml(checklist) {
     softwareRows += `
       <tr>
         <td class="empty-col"></td>
-        <td class="grid-cell">${i + 1}. ${left.software_name}</td>
+        <td class="grid-cell">${i + 1}. ${escapeHtml(left.software_name)}</td>
         <td class="grid-cell center">${checkbox(left.is_available)}</td>
-        <td class="grid-cell">${right ? `${i + 1 + half}. ${right.software_name}` : ''}</td>
+        <td class="grid-cell">${right ? `${i + 1 + half}. ${escapeHtml(right.software_name)}` : ''}</td>
         <td class="grid-cell center">${right ? checkbox(right.is_available) : ''}</td>
       </tr>
     `;
@@ -271,19 +272,19 @@ function buildChecklistHtml(checklist) {
       <tr>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${asset_name || ''}</div>
+            <div class="config-val">${escapeHtml(asset_name)}</div>
             <div class="config-lbl">Device</div>
           </div>
         </td>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${asset_tag || ''}</div>
+            <div class="config-val">${escapeHtml(asset_tag)}</div>
             <div class="config-lbl">ID Tagging Asset</div>
           </div>
         </td>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${site || ''}</div>
+            <div class="config-val">${escapeHtml(site)}</div>
             <div class="config-lbl">Site</div>
           </div>
         </td>
@@ -291,19 +292,19 @@ function buildChecklistHtml(checklist) {
       <tr>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${model || ''}</div>
+            <div class="config-val">${escapeHtml(model)}</div>
             <div class="config-lbl">Merk/Type</div>
           </div>
         </td>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${serial_number || ''}</div>
+            <div class="config-val">${escapeHtml(serial_number)}</div>
             <div class="config-lbl">Serial Number</div>
           </div>
         </td>
         <td>
           <div class="config-label-container">
-            <div class="config-val">${detail_location || ''}</div>
+            <div class="config-val">${escapeHtml(detail_location)}</div>
             <div class="config-lbl">Location</div>
           </div>
         </td>
@@ -407,17 +408,17 @@ function buildChecklistHtml(checklist) {
         <tr>
           <td style="width: 75px; border: none; padding: 2px 0;">Hostname</td>
           <td style="width: 10px; border: none; padding: 2px 0;">:</td>
-          <td style="border: none; padding: 2px 0;">${hostname_note || ''}</td>
+          <td style="border: none; padding: 2px 0;">${escapeHtml(hostname_note)}</td>
         </tr>
         <tr>
           <td style="border: none; padding: 2px 0;">IP Address</td>
           <td style="border: none; padding: 2px 0;">:</td>
-          <td style="border: none; padding: 2px 0;">${ip_address || ''}</td>
+          <td style="border: none; padding: 2px 0;">${escapeHtml(ip_address)}</td>
         </tr>
         <tr>
           <td style="border: none; padding: 2px 0;">MAC Address</td>
           <td style="border: none; padding: 2px 0;">:</td>
-          <td style="border: none; padding: 2px 0;">${mac_address || ''}</td>
+          <td style="border: none; padding: 2px 0;">${escapeHtml(mac_address)}</td>
         </tr>
       </table>
     </div>
@@ -444,19 +445,19 @@ function buildChecklistHtml(checklist) {
             <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
               ${signatureImgOrBlank(spv_signature)}
             </div>
-            <div style="margin-top: 4px;">${spv_name || ''}</div>
+            <div style="margin-top: 4px;">${escapeHtml(spv_name)}</div>
           </td>
           <td style="height: 60px; vertical-align: bottom; padding: 0 15px;">
             <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
               ${signatureImgOrBlank(pic_signature)}
             </div>
-            <div style="margin-top: 4px;">${pic_name || ''}</div>
+            <div style="margin-top: 4px;">${escapeHtml(pic_name)}</div>
           </td>
           <td style="height: 60px; vertical-align: bottom; padding: 0 15px;">
             <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; height: 50px;">
               ${signatureImgOrBlank(technician_signature)}
             </div>
-            <div style="margin-top: 4px;">${technician_name || ''}</div>
+            <div style="margin-top: 4px;">${escapeHtml(technician_name)}</div>
           </td>
         </tr>
       </table>

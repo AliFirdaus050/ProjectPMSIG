@@ -7,6 +7,7 @@
 // PENTING: file ini HANYA mengubah tampilan/layout HTML->PDF. Logika data
 // (field apa yang dipakai, bagaimana device_items difilter, dsb) tidak diubah.
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
+const { escapeHtml } = require('./templateHelpers');
 
 function checkbox(isChecked) {
   return `<div class="checkbox-box">${isChecked ? '&#10003;' : ''}</div>`;
@@ -54,10 +55,10 @@ function buildSwitchChecklistHtml(checklist) {
     return `
       <tr>
         <td class="empty-col"></td>
-        <td class="grid-cell desc-label">${item.item_name}</td>
+        <td class="grid-cell desc-label">${escapeHtml(item.item_name)}</td>
         <td class="grid-cell center">${checkbox(item.condition === 'normal')}</td>
         <td class="grid-cell center">${checkbox(item.condition === 'error')}</td>
-        <td class="grid-cell">${item.information || ''}</td>
+        <td class="grid-cell">${escapeHtml(item.information)}</td>
       </tr>
     `;
   }
@@ -354,7 +355,7 @@ function buildSwitchChecklistHtml(checklist) {
           <td style="border: none; padding: 2px 0;">${mac_address || ''}</td>
         </tr>
       </table>
-      <div style="border-top: 1px solid #D1D5DB; margin-top: 8px; padding-top: 10px; min-height: 20px;">${technician_notes || ''}</div>
+      <div style="border-top: 1px solid #D1D5DB; margin-top: 8px; padding-top: 10px; min-height: 20px;">${escapeHtml(technician_notes)}</div>
       <div class="notes-hint">(Teknisi Wajib Isi Catatan)</div>
     </div>
 
