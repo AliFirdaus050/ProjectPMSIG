@@ -3,9 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
-//const BACKEND_ORIGIN = 'http://localhost:4000';
-const BACKEND_ORIGIN = '';
-
 export default function ChecklistPreviewPage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -20,15 +17,20 @@ export default function ChecklistPreviewPage() {
   const backLabel = canStartPm ? 'Kembali ke PM' : 'Kembali ke Tracker';
 
   useEffect(() => {
-    api.get(`/checklists/${id}`)
-      .then((data) => {
-        if (!data.pdf_path) {
-          setError('PDF belum tersedia untuk checklist ini.');
-          return;
-        }
-        setPdfUrl(`${BACKEND_ORIGIN}${data.pdf_path}`);
+    let objectUrl;
+
+    api.getBlob(`/checklists/${id}/pdf`)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setPdfUrl(objectUrl);
       })
       .catch((err) => setError(err.message));
+
+    // blob URL itu nyimpen memory di browser, wajib dibersihin
+    // kalau halamannya ditinggal biar gak numpuk
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [id]);
 
   return (

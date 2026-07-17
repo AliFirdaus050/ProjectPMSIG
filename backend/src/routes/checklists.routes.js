@@ -18,6 +18,57 @@ function getTemplateBuilder(assetName) {
   return builders[assetName] || null;
 }
 
+// dipakai di GET /:id doang. Lihat detail checklist boleh siapapun teknisi/admin,
+// status apapun, gak peduli pemilik. SPV gak boleh lewat sini (dia cuma boleh liat PDF).
+function checkChecklistViewAccess(req, res, next) {
+  if (req.user.role === 'teknisi' || req.user.role === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ message: 'Kamu tidak punya akses untuk melihat detail checklist ini.' });
+}
+
+// dipakai di PATCH /:id dan POST /:id/generate-pdf.
+// aturan: draft -> teknisi manapun boleh. completed -> cuma technician_id yang tercatat.
+// approved -> gak ada teknisi yang boleh sama sekali. admin bebas kapan aja.
+async function checkChecklistEditAccess(req, res, next) {
+  try {
+    const result = await pool.query(
+      'SELECT technician_id, status FROM pm_checklists WHERE id = $1',
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Checklist tidak ditemukan.' });
+    }
+
+    const { technician_id, status } = result.rows[0];
+    const { role, id: userId } = req.user;
+
+    if (role === 'admin') {
+      req.checklistMeta = { technicianId: technician_id, status };
+      return next();
+    }
+
+    if (role === 'teknisi') {
+      if (status === 'approved') {
+        return res.status(409).json({ message: 'Checklist ini sudah di-approve dan tidak bisa diubah lagi.' });
+      }
+      if (status === 'completed' && technician_id !== userId) {
+        return res.status(403).json({
+          message: 'Checklist ini sedang menunggu approval dan hanya bisa diubah oleh teknisi yang menyelesaikannya.',
+        });
+      }
+      // status draft, atau status completed dan dia pemiliknya -> lolos
+      req.checklistMeta = { technicianId: technician_id, status };
+      return next();
+    }
+
+    return res.status(403).json({ message: 'Kamu tidak punya akses untuk mengubah checklist ini.' });
+  } catch (err) {
+    console.error('Checklist edit access check error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
+}
+
 const router = express.Router();
 router.use(authenticate);
 
@@ -90,18 +141,38 @@ router.post('/', async (req, res) => {
     );
     const scheduledPicName = scheduleResult.rows[0]?.pic_name || null;
 
-    const existingDraft = await pool.query(
+    const existingChecklist = await pool.query(
         `SELECT * FROM pm_checklists
-        WHERE asset_id = $1 AND period_key = $2 AND status = 'draft'
+        WHERE asset_id = $1 AND period_key = $2
         ORDER BY created_at DESC
         LIMIT 1`,
         [asset_id, periodKey]
     );
 
-    if (existingDraft.rows.length > 0) {
-        // udah ada draft aktif, langsung kembalikan itu
-        // return res.status(200).json(existingDraft.rows[0]);
-        return res.status(200).json({ ...existingDraft.rows[0], resumed: true });
+    if (existingChecklist.rows.length > 0) {
+        const existing = existingChecklist.rows[0];
+
+        if (existing.status === 'draft') {
+            // udah ada draft aktif, langsung kembalikan itu, siapapun teknisinya boleh lanjutin
+            return res.status(200).json({ ...existing, resumed: true });
+        }
+
+        if (existing.status === 'completed' && req.user.role === 'teknisi') {
+            if (existing.technician_id === req.user.id) {
+                // dia pemiliknya sendiri, boleh lanjut ke checklist yang sama, bukan bikin baru
+                return res.status(200).json({ ...existing, resumed: true });
+            }
+            return res.status(403).json({
+                message: 'Checklist ini sedang menunggu approval dan hanya bisa diakses oleh teknisi yang menyelesaikannya.',
+            });
+        }
+
+        if (existing.status === 'approved' && req.user.role === 'teknisi') {
+            return res.status(409).json({
+                message: `Checklist untuk aset ini pada periode ${periodKey} sudah di-approve. Tidak bisa membuat checklist baru untuk periode yang sama.`,
+            });
+        }
+        // kalau role admin/spv, dibiarin lanjut bikin baru (buat keperluan testing)
     }
 
     const result = await pool.query(
@@ -129,7 +200,7 @@ router.post('/', async (req, res) => {
 
 // PATCH /api/v1/checklists/:id
 // auto-save mendukung semua kategori
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', checkChecklistEditAccess, async (req, res) => {
   const { id } = req.params;
   const {
     device_items,
@@ -164,6 +235,14 @@ router.patch('/:id', async (req, res) => {
     if (checklistCheck.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Checklist tidak ditemukan.' });
+    }
+
+    if (
+      req.user.role === 'teknisi' &&
+      req.checklistMeta.status === 'draft' &&
+      req.checklistMeta.technicianId !== req.user.id
+    ) {
+      await client.query('UPDATE pm_checklists SET technician_id = $1 WHERE id = $2', [req.user.id, id]);
     }
 
     // update untuk printer dan switch, pc lapyop aman dikosongi aja
@@ -273,7 +352,7 @@ async function fetchFullChecklist(id) {
 
 // POST /api/v1/checklists/:id/generate-pdf
 // buat ngambil pupetter generate pdf
-router.post('/:id/generate-pdf', async (req, res) => {
+router.post('/:id/generate-pdf', checkChecklistEditAccess, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -312,9 +391,19 @@ router.post('/:id/generate-pdf', async (req, res) => {
     const html = buildHtml(checklist);
     const { publicPath } = await generateChecklistPdf(id, html);
 
+    // kalau yang generate itu teknisi, technician_id ikut dipindah ke dia (opsi Y),
+    // soalnya dialah yang beneran nyelesain & finalize checklist ini, bukan yang mulai duluan.
+    // kalau admin yang generate, technician_id yang lama dibiarin (COALESCE dengan null jadi gak berubah).
+    const reassignTo = req.user.role === 'teknisi' ? req.user.id : null;
     const updateResult = await pool.query(
-      `UPDATE pm_checklists SET status = 'completed', pdf_path = $1, updated_at = now() WHERE id = $2 RETURNING *`,
-      [publicPath, id]
+      `UPDATE pm_checklists
+       SET status = 'completed',
+           pdf_path = $1,
+           technician_id = COALESCE($2, technician_id),
+           updated_at = now()
+       WHERE id = $3
+       RETURNING *`,
+      [publicPath, reassignTo, id]
     );
 
     await pool.query(
@@ -437,7 +526,7 @@ router.get('/:id/pdf', async (req, res) => {
 
 // GET /api/v1/checklists/:id 
 // detail lengkap
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkChecklistViewAccess, async (req, res) => {
   try {
     const checklist = await fetchFullChecklist(req.params.id);
     if (!checklist) {
