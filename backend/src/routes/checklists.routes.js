@@ -178,8 +178,8 @@ router.post('/', async (req, res) => {
     let result;
     try {
       result = await pool.query(
-        `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note, period_key, pic_user_id, pic_name)
-         VALUES ($1, $2, 'draft', $3, $4, $5, $6)
+        `INSERT INTO pm_checklists (asset_id, technician_id, technician_name_snapshot, status, hostname_note, period_key, pic_user_id, pic_name)
+         VALUES ($1, $2, (SELECT full_name FROM users WHERE id = $2), 'draft', $3, $4, $5, $6)
          RETURNING *`,
         [asset_id, req.user.id, hostname, periodKey, suggestedPicId, scheduledPicName]
       );
@@ -255,7 +255,12 @@ router.patch('/:id', checkChecklistEditAccess, async (req, res) => {
       req.checklistMeta.status === 'draft' &&
       req.checklistMeta.technicianId !== req.user.id
     ) {
-      await client.query('UPDATE pm_checklists SET technician_id = $1 WHERE id = $2', [req.user.id, id]);
+      await client.query(
+        `UPDATE pm_checklists
+         SET technician_id = $1, technician_name_snapshot = (SELECT full_name FROM users WHERE id = $1)
+         WHERE id = $2`,
+        [req.user.id, id]
+      );
     }
 
     // update untuk printer dan switch, pc lapyop aman dikosongi aja
@@ -338,11 +343,11 @@ router.patch('/:id', checkChecklistEditAccess, async (req, res) => {
 async function fetchFullChecklist(id) {
   const checklistResult = await pool.query(
     `SELECT pc.*, a.asset_name, a.asset_tag, a.serial_number, a.site, a.model, a.detail_location,
-            tech.full_name AS technician_name,
-            spv.full_name AS spv_name
+            COALESCE(tech.full_name, pc.technician_name_snapshot, '(akun sudah dihapus)') AS technician_name,
+            COALESCE(spv.full_name, pc.spv_name_snapshot) AS spv_name
      FROM pm_checklists pc
      JOIN assets a ON pc.asset_id = a.id
-     JOIN users tech ON pc.technician_id = tech.id
+     LEFT JOIN users tech ON pc.technician_id = tech.id
      LEFT JOIN users spv ON pc.spv_id = spv.id
      WHERE pc.id = $1`,
     [id]
@@ -413,6 +418,7 @@ router.post('/:id/generate-pdf', checkChecklistEditAccess, async (req, res) => {
        SET status = 'completed',
            pdf_path = $1,
            technician_id = COALESCE($2, technician_id),
+           technician_name_snapshot = COALESCE((SELECT full_name FROM users WHERE id = $2), technician_name_snapshot),
            updated_at = now()
        WHERE id = $3
        RETURNING *`,
@@ -481,7 +487,9 @@ router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
 
     const updateResult = await pool.query(
       `UPDATE pm_checklists
-       SET status = 'approved', spv_id = $1, spv_signature = $2, spv_approved_at = now(), updated_at = now()
+       SET status = 'approved', spv_id = $1, spv_signature = $2,
+           spv_name_snapshot = (SELECT full_name FROM users WHERE id = $1),
+           spv_approved_at = now(), updated_at = now()
        WHERE id = $3
        RETURNING *`,
       [req.user.id, signatureToUse, id]

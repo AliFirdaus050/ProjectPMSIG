@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const ROLE_LABELS = {
   admin: 'Admin',
@@ -27,6 +28,8 @@ export default function UserManagementPage() {
   const [newPassword, setNewPassword] = useState('');
   const [resetSaving, setResetSaving] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+
+  const { user: currentUser } = useAuth();
 
   async function loadUsers() {
     setLoading(true);
@@ -78,6 +81,21 @@ export default function UserManagementPage() {
       setError(err.message);
     }
   }
+
+  async function handleDeleteUser(user) {
+  const confirmed = window.confirm(
+    `Yakin mau hapus akun "${user.full_name}"? Riwayat checklist yang pernah dia kerjakan tetap aman, tapi akunnya gak akan bisa login lagi. Aksi ini gak bisa dibatalkan.`
+  );
+  if (!confirmed) return;
+
+  setError('');
+  try {
+    await api.delete(`/users/${user.id}`);
+    await loadUsers();
+  } catch (err) {
+    setError(err.message);
+  }
+}
 
   async function openPicAssets(user) {
     setManagingPicId(user.id);
@@ -250,9 +268,22 @@ export default function UserManagementPage() {
                         Atur Device
                       </button>
                     )}
-                    <button onClick={() => openResetPassword(u)} className="text-primary dark:text-blue-300 underline text-xs">
-                      Reset Password
+                    <button
+                      onClick={() => openResetPassword(u)}
+                      title="Reset Password"
+                      className="p-1.5 text-on-surface-variant hover:text-primary bg-surface-container-lowest dark:bg-slate-800 border border-outline-variant hover:border-primary rounded transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">key</span>
                     </button>
+                    {u.id !== currentUser?.id && (
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        title="Hapus"
+                        className="p-1.5 text-on-surface-variant hover:text-status-error bg-surface-container-lowest dark:bg-slate-800 border border-outline-variant hover:border-status-error rounded transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

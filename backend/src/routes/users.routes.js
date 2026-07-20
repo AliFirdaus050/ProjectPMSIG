@@ -162,6 +162,48 @@ router.post('/:id/reset-password', async (req, res) => {
   }
 });
 
+// DELETE /api/v1/users/:id
+router.delete('/:id', authorize('admin'), async (req, res) => {
+  const { id } = req.params;
+
+  // gak boleh hapus akun sendiri, bisa2 admin gak sengaja ngunci diri sendiri dari sistem
+  if (id === req.user.id) {
+    return res.status(400).json({ message: 'Tidak bisa menghapus akun sendiri.' });
+  }
+
+  try {
+    const targetResult = await pool.query('SELECT id, full_name, role FROM users WHERE id = $1', [id]);
+    if (targetResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User tidak ditemukan.' });
+    }
+    const target = targetResult.rows[0];
+
+    // gak boleh hapus admin terakhir yang tersisa, biar sistem gak kekunci total
+    if (target.role === 'admin') {
+      const adminCount = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+      if (parseInt(adminCount.rows[0].count, 10) <= 1) {
+        return res.status(400).json({ message: 'Tidak bisa menghapus admin terakhir yang tersisa.' });
+      }
+    }
+
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    res.json({ message: `User ${target.full_name} berhasil dihapus.` });
+
+    logActivity({
+      userId: req.user.id,
+      action: 'user.delete',
+      entityType: 'user',
+      entityId: id,
+      description: `Menghapus akun ${target.full_name} (${target.role}).`,
+      req,
+    });
+  } catch (err) {
+    console.error('Delete user error:', err.message);
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
+  }
+});
+
 // pic akan diabaikan
 
 // GET /api/v1/users/:id/pic-assets
