@@ -28,8 +28,10 @@ app.get('/api/v1/health', async (req, res) => {
   }
 });
 
-const path = require('path');
-app.use('/files', express.static(path.join(__dirname, '../storage')));
+// NOTE: sebelumnya ada `app.use('/files', express.static(...))` di sini —
+// dihapus karena itu yang bikin PDF checklist bisa didownload siapa aja di
+// jaringan tanpa login. Sekarang PDF cuma bisa diakses lewat
+// GET /api/v1/checklists/:id/pdf yang wajib login (lihat checklists.routes.js).
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/assets', assetsRoutes);
 app.use('/api/v1/checklists', checklistsRoutes);

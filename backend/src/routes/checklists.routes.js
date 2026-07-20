@@ -175,12 +175,28 @@ router.post('/', async (req, res) => {
         // kalau role admin/spv, dibiarin lanjut bikin baru (buat keperluan testing)
     }
 
-    const result = await pool.query(
-      `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note, period_key, pic_user_id, pic_name)
-       VALUES ($1, $2, 'draft', $3, $4, $5, $6)
-       RETURNING *`,
-      [asset_id, req.user.id, hostname, periodKey, suggestedPicId, scheduledPicName]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        `INSERT INTO pm_checklists (asset_id, technician_id, status, hostname_note, period_key, pic_user_id, pic_name)
+         VALUES ($1, $2, 'draft', $3, $4, $5, $6)
+         RETURNING *`,
+        [asset_id, req.user.id, hostname, periodKey, suggestedPicId, scheduledPicName]
+      );
+    } catch (err) {
+      // 23505 = unique_violation dari partial index pm_checklists_one_draft_per_period
+      // (migration 024) — artinya ada request lain yang menang duluan bikin draft
+      // ini di detik yang nyaris sama (mis. double-klik). Bukan error asli,
+      // cukup ambil & kembalikan draft yang udah kebuat itu.
+      if (err.code === '23505') {
+        const winner = await pool.query(
+          `SELECT * FROM pm_checklists WHERE asset_id = $1 AND period_key = $2 AND status = 'draft'`,
+          [asset_id, periodKey]
+        );
+        return res.status(200).json({ ...winner.rows[0], resumed: true });
+      }
+      throw err;
+    }
 
     res.status(201).json(result.rows[0]);
 
@@ -505,7 +521,14 @@ router.post('/:id/approve', authorize('spv', 'admin'), async (req, res) => {
   }
 });
 
+const path = require('path');
+const STORAGE_ROOT = path.join(__dirname, '../../storage');
+
 // GET /api/v1/checklists/:id/pdf
+// syarat aksesnya cukup "sudah login" (router.use(authenticate) di atas) —
+// SEMUA teknisi/admin/spv boleh saling lihat PDF checklist siapa pun, gak
+// dibatasi pemilik/status. Yang ditutup di sini murni akses TANPA login sama
+// sekali (lihat juga penghapusan static /files di server.js).
 router.get('/:id/pdf', async (req, res) => {
   const { id } = req.params;
   try {
@@ -517,7 +540,25 @@ router.get('/:id/pdf', async (req, res) => {
     if (!pdfPath) {
       return res.status(404).json({ message: 'PDF belum pernah digenerate untuk checklist ini.' });
     }
-    res.redirect(pdfPath);
+
+    // pdf_path tersimpan dengan prefix "/files/..." (peninggalan static
+    // serving lama yang sekarang dimatikan di server.js). Di-resolve ke path
+    // asli di folder storage lalu di-stream langsung lewat koneksi yang
+    // sudah lolos authenticate di atas — bukan lewat URL statis publik lagi.
+    const relativePath = pdfPath.replace(/^\/files\//, '');
+    const absolutePath = path.join(STORAGE_ROOT, relativePath);
+
+    // jaga-jaga path traversal sebelum sendFile
+    if (!absolutePath.startsWith(STORAGE_ROOT)) {
+      return res.status(400).json({ message: 'Path PDF tidak valid.' });
+    }
+
+    res.sendFile(absolutePath, (err) => {
+      if (err && !res.headersSent) {
+        console.error('Send PDF error:', err.message);
+        res.status(404).json({ message: 'File PDF tidak ditemukan di server.' });
+      }
+    });
   } catch (err) {
     console.error('Get PDF error:', err.message);
     res.status(500).json({ message: 'Terjadi kesalahan server.' });
