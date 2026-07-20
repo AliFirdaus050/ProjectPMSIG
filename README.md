@@ -165,11 +165,11 @@ pnpm run migrate
 
 ```bash
 # Dry run dulu untuk cek hasil parsing
-node scripts/import-assets-from-excel.js "path/ke/file.xlsx" --dry-run
+node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --dry-run
 
 # Import sungguhan per kategori
-node scripts/import-assets-from-excel.js "path/ke/file.xlsx" --only=PC/Laptop
-node scripts/import-assets-from-excel.js "path/ke/file.xlsx" --only=Printer,Switch
+node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --only=PC/Laptop
+node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --only=Printer,Switch
 ```
 
 Buat akun admin pertama:
