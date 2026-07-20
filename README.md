@@ -128,121 +128,6 @@ Pastikan environment pengembangan sudah memiliki:
 
 Puppeteer akan mengunduh binary Chromium sendiri saat instalasi pertama, pastikan koneksi internet tersedia saat `pnpm install` di folder `backend`.
 
-## Instalasi
-
-### 1. Clone repository
-
-```bash
-git clone https://github.com/AliFirdaus050/ProjectPMSIG.git
-cd ProjectPMSIG
-```
-
-### 2. Siapkan database PostgreSQL
-
-```sql
--- lewat psql atau tools GUI seperti pgAdmin
-CREATE DATABASE pm_checklist_db;
-```
-
-### 3. Setup Backend
-
-```bash
-cd backend
-pnpm install
-pnpm approve-builds   # approve postinstall script (esbuild, puppeteer, bcrypt)
-pnpm install          # ulangi supaya Chromium ke-download sempurna
-```
-
-Salin `.env.example` menjadi `.env`, lalu isi sesuai [tabel environment variables](#konfigurasi-environment-variables) di bawah.
-
-Jalankan migration untuk membuat seluruh skema tabel:
-
-```bash
-pnpm run migrate
-```
-
-(Opsional) Import data aset awal dari file Excel:
-
-```bash
-# Dry run dulu untuk cek hasil parsing
-node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --dry-run
-
-# Import sungguhan per kategori
-node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --only=PC/Laptop
-node scripts/import-assets-from-excel.js "Perangkat Tuban.xlsx" --only=Printer,Switch
-```
-
-Buat akun admin pertama:
-
-```bash
-node scripts/seed-admin.js "Nama Lengkap" email@sig.co.id passwordAmanAdmin1
-```
-
-### 4. Setup Frontend
-
-```bash
-cd ../frontend
-pnpm install
-pnpm approve-builds   # kalau ada peringatan build script
-pnpm install
-```
-
-Kalau menjalankan lewat HTTPS lokal (disarankan, karena kamera untuk pemindaian barcode butuh koneksi aman), siapkan sertifikat lokal (misal lewat [mkcert](https://github.com/FiloSottile/mkcert)) dan sesuaikan path-nya di `vite.config.js`.
-
-## Konfigurasi Environment Variables
-
-Buat file `.env` di folder `backend/` dengan variabel berikut:
-
-| Variabel | Wajib | Contoh | Keterangan |
-|---|---|---|---|
-| `DATABASE_URL` | Ya | `postgresql://postgres:password@localhost:5432/pm_checklist_db` | Connection string PostgreSQL |
-| `PORT` | Tidak | `4000` | Port backend, default `4000` jika tidak diisi |
-| `JWT_SECRET` | Ya | string acak & panjang (≥32 karakter) | Kunci penandatanganan token JWT, **jangan** pakai nilai contoh |
-| `JWT_EXPIRES_IN` | Tidak | `8h` | Masa berlaku token, default `8h` jika tidak diisi |
-| `FRONTEND_URL` | Ya (produksi) | `https://10.6.55.200:5173,https://localhost:5173` | Whitelist origin untuk CORS, bisa lebih dari satu dipisah koma |
-| `NODE_ENV` | Tidak | `development` / `production` | Memengaruhi verbosity log & beberapa perilaku keamanan |
-| `OVERRIDE_TODAY` | Tidak | `2026-07-01` | **Hanya untuk testing**, override tanggal "hari ini" saat menghitung periode PM |
-
-> **Penting:** jangan commit file `.env` ke repository. `JWT_SECRET` wajib diisi nilai acak sendiri, bukan nilai contoh di dokumentasi ini.
-
-## Menjalankan Proyek
-
-### Development
-
-Jalankan backend dan frontend di dua terminal terpisah.
-
-```bash
-# terminal 1 — backend
-cd backend
-pnpm run dev
-# server berjalan di http://localhost:4000
-# cek kesehatan server: GET http://localhost:4000/api/v1/health
-
-# terminal 2 — frontend
-cd frontend
-pnpm run dev
-# aplikasi berjalan di http://localhost:5173 (atau sesuai konfigurasi vite.config.js)
-```
-
-### Production
-
-```bash
-# backend
-cd backend
-pnpm install --prod
-pnpm run start
-
-# frontend — build jadi static file, lalu sajikan lewat web server (nginx, dsb.)
-cd frontend
-pnpm run build
-pnpm run preview   # opsional, untuk uji coba hasil build secara lokal
-```
-
-Untuk produksi, pastikan:
-- `NODE_ENV=production` di-set pada environment backend.
-- `JWT_SECRET` dan `DATABASE_URL` memakai nilai produksi, bukan nilai development.
-- Hasil build frontend (folder `dist/`) disajikan lewat web server terpisah (nginx/Apache) dengan reverse proxy ke backend untuk path `/api`.
-
 ## Role & Hak Akses
 
 | Role | Checklist Draft | Checklist Menunggu Approval | Checklist Sudah Approved | Approve Checklist | Kelola User | Kelola Aset | Upload Jadwal PM |
@@ -251,10 +136,27 @@ Untuk produksi, pastikan:
 | **SPV (Supervisor)** | Tidak bisa buka detail | Tidak bisa buka detail, hanya lihat PDF | Hanya bisa lihat & unduh PDF | **Bisa** | Tidak bisa | Tidak bisa | Tidak bisa |
 | **Admin** | Bisa lihat & edit kapan saja | Bisa lihat & edit kapan saja | Bisa lihat & edit (koreksi data) | Tidak bisa | **Bisa** (tambah, nonaktifkan, reset password, hapus) | **Bisa** (tambah & hapus) | Bisa upload & hapus jadwal |
 
-Catatan:
-- Setiap checklist yang di-generate PDF-nya oleh seorang teknisi otomatis tercatat sebagai "pemilik" checklist tersebut untuk keperluan pembatasan edit di atas.
-- Menghapus akun pengguna tidak menghapus riwayat checklist yang pernah dikerjakan/disetujui pengguna tersebut — nama pengguna tetap tersimpan sebagai catatan historis pada checklist terkait.
-- Role `pic` pernah ada di skema awal namun sudah tidak dipakai fungsinya di versi aplikasi saat ini.
+### Aksi yang bisa dilakukan
+
+| Area | Teknisi | SPV | Admin |
+|---|---|---|---|
+| Checklist berstatus **draft** (belum di-generate PDF) | Bisa lihat & edit — **siapa pun teknisi**, tidak dibatasi hanya yang memulai | Tidak bisa buka detailnya sama sekali | Bisa lihat & edit kapan saja |
+| Checklist berstatus **menunggu approval** (sudah di-generate PDF, belum di-approve) | Hanya teknisi yang **menyelesaikan** checklist itu (generate PDF terakhir) yang bisa lanjut edit | Tidak bisa buka detail mentahnya, cuma bisa lihat file PDF-nya | Bisa lihat & edit kapan saja |
+| Checklist berstatus **sudah disetujui (approved)** | Bisa lihat & unduh PDF, tidak bisa edit | Bisa lihat & unduh PDF | Bisa lihat, unduh, dan tetap bisa edit (untuk koreksi manual kalau perlu) |
+| Approve checklist | Tidak bisa | **Bisa** — ini satu-satunya aksi utama SPV di aplikasi ini | Tidak diberi akses (approval sengaja dijaga khusus jalur SPV) |
+| Kelola pengguna (tambah/nonaktifkan/reset password/hapus) | Tidak bisa | Bisa, **kecuali** terhadap akun admin (SPV tidak bisa membuat, mengubah, atau reset password akun admin) | Bisa penuh |
+| Kelola data aset (tambah) | Bisa | Bisa | Bisa |
+| Hapus data aset | Bisa | Bisa | Bisa |
+| Upload jadwal PM (Excel) | Bisa | Tidak bisa | Bisa |
+| Hapus jadwal PM | Tidak bisa | Tidak bisa | Bisa |
+| Lihat log aktivitas | Tidak bisa | Tidak bisa | Bisa |
+| Tracker & History (lihat status/riwayat PM) | Bisa, tapi tombol "lanjutkan" hanya muncul untuk checklist yang memang jadi haknya | Bisa lihat semua, tanpa tombol "lanjutkan" (SPV bukan pengerjаa PM) | Bisa lihat semua |
+ 
+Beberapa catatan tambahan yang mungkin relevan waktu kalian menyusun skenario pengujian:
+ 
+- **Siapa yang tercatat sebagai "pemilik" checklist bisa berpindah.** Kalau teknisi A memulai draft tapi tidak menyelesaikannya, lalu teknisi B yang melanjutkan dan generate PDF-nya, maka B yang tercatat sebagai penanggung jawab — bukan A. ini keputusan desain yang disengaja (yang menyelesaikan yang bertanggung jawab), bukan bug.
+- **Akun yang dihapus tidak menghapus riwayat checklist-nya.** Nama pengguna tetap tersimpan di checklist yang pernah dia kerjakan/setujui, meskipun akunnya sendiri sudah dihapus dari sistem — ini untuk menjaga jejak audit tetap utuh.
+- Endpoint `GET /:id/pdf` saat ini bisa diakses oleh **teknisi, SPV, maupun admin** yang sudah login — tidak dibatasi berdasarkan siapa pemilik checklist tersebut (siapa pun yang login bisa lihat PDF checklist siapa saja). Kalau ini bukan perilaku yang diharapkan dari sudut pandang kebijakan keamanan kalian, ini poin yang bagus untuk didiskusikan dengan tim developer.
 
 ## Struktur Folder
 
@@ -319,6 +221,291 @@ ProjectPMSIG/
     │   │   └── ProfilePage.jsx
     │   └── App.jsx                      # routing utama
     └── package.json
+```
+
+## Setup dari Laptop Baru — Windows
+ 
+Langkah ini ditulis dengan asumsi laptop benar-benar baru: belum ada Node, git, PostgreSQL, atau apa pun.
+ 
+### 1. Install Git
+ 
+Unduh dari [git-scm.com](https://git-scm.com/download/win), install dengan opsi default (next-next-next juga aman).
+ 
+### 2. Install Node.js
+ 
+Unduh Node.js **20 LTS** dari [nodejs.org](https://nodejs.org/) (pilih versi LTS, bukan Current). Setelah install, cek lewat Command Prompt atau PowerShell:
+ 
+```powershell
+node -v
+npm -v
+```
+ 
+### 3. Install pnpm
+ 
+```powershell
+npm install -g pnpm
+pnpm -v
+```
+ 
+### 4. Install PostgreSQL
+ 
+Unduh installer dari [postgresql.org/download/windows](https://www.postgresql.org/download/windows/). Saat instalasi, kalian akan diminta bikin password untuk user `postgres` — catat baik-baik, ini dipakai nanti di `DATABASE_URL`. Port default `5432` biarkan saja kecuali memang sudah dipakai aplikasi lain.
+ 
+Setelah terinstall, buka **pgAdmin** (ikut terinstall bareng PostgreSQL) atau `psql` dari Command Prompt, lalu buat database barunya:
+ 
+```sql
+CREATE DATABASE pm_checklist_db;
+```
+ 
+### 5. Install mkcert (untuk sertifikat HTTPS lokal)
+ 
+Frontend butuh HTTPS supaya kamera (untuk scan barcode) bisa diakses browser. Cara paling gampang di Windows pakai [Chocolatey](https://chocolatey.org/install):
+ 
+```powershell
+choco install mkcert
+mkcert -install
+```
+ 
+### 6. Clone repository
+ 
+```powershell
+git clone https://github.com/AliFirdaus050/ProjectPMSIG.git
+cd ProjectPMSIG
+```
+ 
+### 7. Setup Backend
+ 
+```powershell
+cd backend
+pnpm install
+pnpm approve-builds
+pnpm install
+```
+ 
+`pnpm approve-builds` itu langkah keamanan bawaan pnpm — beberapa package (`bcrypt`, `puppeteer`) punya script instalasi native yang butuh persetujuan eksplisit sebelum dijalankan. Setelah disetujui, jalankan `pnpm install` sekali lagi supaya Puppeteer selesai download Chromium-nya.
+ 
+Buat file `.env` di dalam folder `backend/` (lihat [Environment Variables](#environment-variables) untuk daftar lengkapnya):
+ 
+```powershell
+notepad .env
+```
+ 
+Jalankan migration untuk membuat seluruh skema tabel:
+ 
+```powershell
+pnpm run migrate
+```
+ 
+Buat akun admin pertama:
+ 
+```powershell
+node scripts/seed-admin.js "Nama Lengkap" admin@sig.co.id passwordAmanAdmin1
+```
+ 
+### 8. Setup Frontend
+ 
+```powershell
+cd ../frontend
+pnpm install
+pnpm approve-builds
+pnpm install
+```
+ 
+Generate sertifikat HTTPS lokal pakai mkcert. Sesuaikan nama host/IP dengan mesin kalian sendiri (kalau tidak yakin, `localhost` saja sudah cukup untuk testing):
+ 
+```powershell
+mkcert localhost 127.0.0.1
+```
+ 
+Perintah ini menghasilkan 2 file, misalnya `localhost+1.pem` dan `localhost+1-key.pem`. Buka `frontend/vite.config.js`, dan sesuaikan baris `key`/`cert` supaya menunjuk ke nama file yang barusan kalian generate:
+ 
+```js
+https: {
+  key: fs.readFileSync('./localhost+1-key.pem'),
+  cert: fs.readFileSync('./localhost+1.pem'),
+},
+```
+ 
+Setelah itu, lanjut ke [Menjalankan untuk Testing Sehari-hari](#menjalankan-untuk-testing-sehari-hari).
+ 
+## Setup dari Laptop Baru — Ubuntu/Linux
+ 
+### 1. Update dulu & install Git
+ 
+```bash
+sudo apt update
+sudo apt install -y git curl
+```
+ 
+### 2. Install Node.js
+ 
+Cara paling gampang pakai NodeSource (contoh untuk Node 20 LTS):
+ 
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+```
+ 
+### 3. Install pnpm
+ 
+```bash
+sudo npm install -g pnpm
+pnpm -v
+```
+ 
+### 4. Install PostgreSQL
+ 
+```bash
+sudo apt install -y postgresql postgresql-contrib
+sudo systemctl enable --now postgresql
+```
+ 
+Buat user & database:
+ 
+```bash
+sudo -u postgres psql
+```
+ 
+Di dalam prompt `psql`:
+ 
+```sql
+ALTER USER postgres WITH PASSWORD 'passwordAmanKalian';
+CREATE DATABASE pm_checklist_db;
+\q
+```
+ 
+### 5. Install mkcert
+ 
+```bash
+sudo apt install -y libnss3-tools
+curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+chmod +x mkcert-v*-linux-amd64
+sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+mkcert -install
+```
+ 
+### 6. Install dependency Puppeteer
+ 
+Puppeteer butuh beberapa library sistem tambahan untuk menjalankan Chromium headless di Linux:
+ 
+```bash
+sudo apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+  libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+  libxrandr2 libgbm1 libasound2
+```
+ 
+### 7. Clone repository
+ 
+```bash
+git clone https://github.com/AliFirdaus050/ProjectPMSIG.git
+cd ProjectPMSIG
+```
+ 
+### 8. Setup Backend
+ 
+```bash
+cd backend
+pnpm install
+pnpm approve-builds
+pnpm install
+```
+ 
+Buat file `.env`:
+ 
+```bash
+nano .env
+```
+ 
+Isi sesuai [Environment Variables](#environment-variables), lalu jalankan migration dan buat akun admin pertama:
+ 
+```bash
+pnpm run migrate
+node scripts/seed-admin.js "Nama Lengkap" admin@sig.co.id passwordAmanAdmin1
+```
+ 
+### 9. Setup Frontend
+ 
+```bash
+cd ../frontend
+pnpm install
+pnpm approve-builds
+pnpm install
+mkcert localhost 127.0.0.1
+```
+ 
+Sama seperti di Windows, sesuaikan `frontend/vite.config.js` supaya path `key`/`cert` menunjuk ke nama file hasil `mkcert` yang baru saja dibuat.
+ 
+## Menjalankan untuk Testing Sehari-hari
+ 
+Ini mode yang paling sering dipakai selama development maupun waktu kalian eksplorasi/testing manual — dua proses jalan terpisah, masing-masing auto-reload kalau ada perubahan kode.
+ 
+```bash
+# terminal 1 — backend
+cd backend
+pnpm run dev
+# jalan di http://localhost:4000
+# cek hidup/tidaknya: GET http://localhost:4000/api/v1/health
+ 
+# terminal 2 — frontend
+cd frontend
+pnpm run dev
+# jalan di https://localhost:5173 (perhatikan HTTPS, bukan HTTP)
+```
+ 
+Buka `https://localhost:5173` di browser, login pakai akun admin yang dibuat lewat `seed-admin.js` tadi.
+ 
+## Deployment Sungguhan (PM2 + Nginx)
+ 
+Di lingkungan kami, aplikasi ini jalan begini: backend dijaga **PM2** (biar otomatis restart kalau crash dan tetap hidup 24 jam), dan **Nginx** berdiri di depan sebagai reverse proxy sekaligus yang menyajikan hasil build frontend.
+ 
+> Catatan: file konfigurasi PM2 (`ecosystem.config.js`) dan Nginx belum kami commit ke repository ini, jadi contoh di bawah adalah representasi dari setup yang sebenarnya kami pakai — sesuaikan path dan domain/IP-nya dengan environment kalian.
+ 
+### 1. Build frontend
+ 
+```bash
+cd frontend
+pnpm run build
+```
+ 
+Ini menghasilkan folder `frontend/dist/` berisi static file siap disajikan.
+ 
+### 2. Jalankan backend lewat PM2
+ 
+Install PM2 secara global sekali saja:
+ 
+```bash
+sudo npm install -g pm2
+```
+ 
+Contoh `ecosystem.config.js` yang ditaruh di folder `backend/`:
+ 
+```js
+module.exports = {
+  apps: [
+    {
+      name: 'pm-checklist-backend',
+      script: 'src/server.js',
+      cwd: __dirname,
+      env: {
+        NODE_ENV: 'production',
+      },
+      instances: 1,
+      autorestart: true,
+      watch: false,
+    },
+  ],
+};
+```
+ 
+Jalankan:
+ 
+```bash
+cd backend
+pnpm install --prod
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup   # supaya PM2 otomatis jalan lagi kalau server reboot
 ```
 
 ## API Endpoints
@@ -396,22 +583,5 @@ Semua endpoint diawali prefix `/api/v1`. Endpoint selain `/auth/login` dan `/hea
 | GET | `/` | Daftar log aktivitas | Admin, SPV |
 | GET | `/actions` | Daftar jenis aksi yang tercatat | Admin, SPV |
 
-## Kontribusi
-
-Proyek ini dikerjakan secara tim internal. Alur kontribusi yang disarankan:
-
-1. Buat branch baru dari `main` untuk tiap perbaikan/fitur (`git checkout -b nama-fitur`).
-2. Jalankan migration terbaru sebelum mulai kerja (`pnpm run migrate`), pastikan environment lokal sinkron dengan skema database terkini.
-3. Kalau perubahan menyentuh file yang sama dengan anggota tim lain (contoh: `server.js`), koordinasikan dulu siapa push duluan, lalu `git pull` sebelum lanjut mengedit, untuk menghindari konflik merge.
-4. Sertakan langkah testing manual pada deskripsi commit/PR, terutama untuk perubahan yang menyangkut hak akses (role-based access) atau alur approval checklist.
-5. Jangan commit file `.env`, hasil PDF di `storage/checklists/`, atau `node_modules/`.
-
-## Lisensi
-
-Proyek ini bersifat **internal**, digunakan untuk kebutuhan operasional SIG. Tidak didistribusikan untuk penggunaan publik/umum. Hubungi penanggung jawab proyek untuk pertanyaan terkait penggunaan ulang atau distribusi kode ini.
-
-## Kontak / Penulis
-
-Dikembangkan dan dikelola oleh tim IT Site Operation SIG.
 
 Untuk pertanyaan, laporan bug, atau usulan fitur, silakan buka issue di repository ini atau hubungi tim pengembang secara langsung.
