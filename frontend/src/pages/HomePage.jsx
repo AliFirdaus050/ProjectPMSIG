@@ -8,8 +8,6 @@ const ROLE_LABELS = {
   pic: 'PIC',
 };
 
-// Logic asli dipertahankan 100% - cuma nambah `icon` & `badge` (opsional)
-// buat tampilan, gak ngubah field `roles` yang menentukan siapa lihat apa.
 const ALL_MENUS = [
   { path: '/checklist-baru', label: 'Checklist Baru', description: 'Cari serial number & isi checklist PM', roles: ['teknisi'], icon: 'checklist', badge: 'ACTION', badgeClass: 'bg-blue-100 text-blue-700' },
   { path: '/upload-jadwal', label: 'Upload Jadwal', description: 'Unggah jadwal PM periode berikutnya', roles: ['teknisi'], icon: 'calendar_month' },
@@ -23,7 +21,6 @@ const ALL_MENUS = [
 export default function HomePage() {
   const { user } = useAuth();
 
-  // Admin bisa akses semua menu, role lain sesuai daftar roles masing-masing menu.
   const visibleMenus = ALL_MENUS.filter((menu) => user?.role === 'admin' || menu.roles.includes(user?.role));
 
   return (

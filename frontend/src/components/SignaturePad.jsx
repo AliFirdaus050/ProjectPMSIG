@@ -1,7 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
 
-// Canvas tanda tangan sederhana: gambar bebas pakai jari/mouse/stylus,
-// hasil disimpan sebagai base64 PNG lewat callback onChange.
 export default function SignaturePad({ value, onChange, label }) {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
@@ -16,8 +14,6 @@ export default function SignaturePad({ value, onChange, label }) {
     ctx.strokeStyle = '#111827';
   }, []);
 
-  // Load ulang gambar tiap kali `value` dari luar berubah (misal saat data
-  // checklist selesai dimuat dari server, setelah komponen pertama render).
   useEffect(() => {
     if (!value) return;
     const canvas = canvasRef.current;

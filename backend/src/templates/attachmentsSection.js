@@ -1,9 +1,4 @@
-// handle lampiran (halaman kedua pada pdf) bersifat opsional, bisa ada bisa gak
-//
-// File ini SHARED dipakai oleh ketiga template (PC/Laptop, Switch, Printer)
-// lewat `${attachmentStyles}` dan `buildAttachmentsHtml(...)` — jadi cukup
-// ubah di sini saja untuk konsisten di ketiganya, tanpa perlu sentuh
-// template checklist utama masing-masing.
+// handle lampiran (halaman kedua pada pdf) bersifat opsional, bisa ada bisa ga
 
 const { escapeHtml } = require('./templateHelpers');
 
@@ -13,16 +8,6 @@ function buildAttachmentsHtml(attachments, attachmentsNote) {
 
   if (rows.length === 0 && !note) return '';
 
-  // Tiap baris = 1 <table> mini sendiri (border-collapse, cuma 1 baris),
-  // bukan <tr> di dalam satu tabel raksasa. Alasannya dua:
-  // 1. Biar garisnya beneran collapse jadi 1 garis tunggal ala Excel (bukan
-  //    kotak-dalam-kotak seperti versi sebelumnya).
-  // 2. page-break-inside:avoid jauh lebih reliable di Chromium/Puppeteer kalau
-  //    diterapkan ke elemen block (tabel utuh) dibanding ke <tr> individual di
-  //    tabel besar — jadi baris foto+keterangan tidak akan terpotong di tengah
-  //    kalau lampirannya panjang sampai berhalaman-halaman.
-  // margin-bottom: -1px dipakai supaya border bawah baris ini "menyatu" dengan
-  // border atas baris berikutnya (persis seperti border-collapse di 1 tabel).
   const rowsHtml = rows.map((row, idx) => {
     const cells = row.cells.slice(0, 2);
     const isSingle = cells.length === 1;
@@ -54,10 +39,6 @@ function buildAttachmentsHtml(attachments, attachmentsNote) {
   `;
 }
 
-// .main-title & .notes-box dipakai ulang dari nama class yang sama persis di
-// template utama masing-masing, supaya temanya otomatis konsisten. Definisi
-// di sini jadi fallback (nilainya disamakan) kalau suatu saat dipakai di
-// tempat yang belum mendefinisikannya sendiri.
 const attachmentStyles = `
   .main-title {
     border: 2px solid black;

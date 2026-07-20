@@ -46,9 +46,6 @@ function AdminOrSpvRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
-// Halaman mulai PM baru (cari serial number) — cuma teknisi/admin, biar SPV/PIC
-// gak kepencet gak sengaja bikin checklist PM baru (misal lewat tombol "Kembali
-// ke PM" di halaman preview PDF).
 function TeknisiRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-8 text-gray-500 text-sm">Memuat...</div>;

@@ -18,22 +18,19 @@ export default function TrackerPage() {
   const [error, setError] = useState('');
   const [approvingId, setApprovingId] = useState(null);
 
-  // Fetch daftar periode dari endpoint yang sama kayak Upload Jadwal
   useEffect(() => {
     api.get('/schedules/periods')
       .then((data) => {
         setPeriods(data);
-        // Default ke periode pertama (periode berjalan sekarang)
         if (data.length > 0) {
           setPeriodKey(data[0].period_key);
           load(data[0].period_key);
         }
       })
       .catch(() => {
-        // Kalau fetch periods gagal, tetap load tracker (pakai periode default backend)
         load();
       });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   async function load(period) {
     setLoading(true);

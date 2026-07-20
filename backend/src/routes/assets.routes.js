@@ -26,7 +26,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// POST /api/v1/assets (FR-2 — pendaftaran aset baru)
+// POST /api/v1/assets (FR-2 pendaftaran aset baru)
 router.post('/', async (req, res) => {
   const { asset_name, asset_tag, serial_number, model, category, kategori, hostname, site, detail_location } = req.body;
 

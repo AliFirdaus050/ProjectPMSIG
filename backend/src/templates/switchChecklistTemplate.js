@@ -1,11 +1,5 @@
-// Template HTML untuk PDF checklist Switch, mengikuti gaya visual template
-// PC/Laptop (config box "Configurations Items" + "Date", tabel per-section,
-// signature footer) — disesuaikan kontennya: cuma 2 kolom tanda tangan
-// (IT Site Operation, Technician), dan section "2. Device Utilization"
-// terpisah dari "1. Check Device Functions".
-//
-// PENTING: file ini HANYA mengubah tampilan/layout HTML->PDF. Logika data
-// (field apa yang dipakai, bagaimana device_items difilter, dsb) tidak diubah.
+// template laporan switch
+
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
 const { escapeHtml } = require('./templateHelpers');
 
@@ -43,10 +37,6 @@ function buildSwitchChecklistHtml(checklist) {
     attachments, attachments_note,
   } = checklist;
 
-  // Sama seperti sebelumnya: device_items berisi gabungan "Check Device
-  // Functions" (7 item) dan "Device Utilization" (3 item), dipisah lagi di
-  // sini berdasarkan nama item karena tabelnya sama tapi section-nya beda.
-  // (logika ini tidak diubah dari versi sebelumnya)
   const utilizationNames = ['Processor (%)', 'Memory (%)', 'Temperature (°C)'];
   const functionItems = (device_items || []).filter((i) => !utilizationNames.includes(i.item_name));
   const utilizationItems = (device_items || []).filter((i) => utilizationNames.includes(i.item_name));

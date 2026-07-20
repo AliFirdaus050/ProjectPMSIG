@@ -6,11 +6,9 @@ import SignaturePad from '../components/SignaturePad';
 export default function ChecklistFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [checklist, setChecklist] = useState(null);
   const [config, setConfig] = useState(null);
 
-  // deviceItemsBySection: { [sectionKey]: [{item_name, condition, information}] }
   const [deviceItemsBySection, setDeviceItemsBySection] = useState({});
   const [softwareItems, setSoftwareItems] = useState([]);
   const [additionalSoftware, setAdditionalSoftware] = useState(['', '', '', '', '', '']);
@@ -30,7 +28,6 @@ export default function ChecklistFormPage() {
   const [picSignature, setPicSignature] = useState('');
   const [picName, setPicName] = useState('');
 
-  // attachments: [{ cells: [{image, caption}, {image, caption}?] }] — lampiran foto opsional (halaman 2 PDF)
   const [attachments, setAttachments] = useState([]);
   const [attachmentsNote, setAttachmentsNote] = useState('');
   const [savedSignature, setSavedSignature] = useState(null);
@@ -149,7 +146,6 @@ export default function ChecklistFormPage() {
     }
   }
 
-  // Retry otomatis kalau koneksi sempat putus (Edge Case 3, Bagian 11 PRD)
   useEffect(() => {
     function handleOnline() { doSave(); }
     window.addEventListener('online', handleOnline);

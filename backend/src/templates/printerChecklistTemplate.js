@@ -1,11 +1,5 @@
-// Template HTML untuk PDF checklist Printer, mengikuti gaya visual template
-// PC/Laptop & Switch (config box "Configurations Items" + "Date", tabel
-// per-section, signature footer) — disesuaikan kontennya: section "2. Device
-// Data" (Firmware series, Consumable Type) dan "3. Stok Tinta", serta 3 kolom
-// tanda tangan (Person In Charge SIG / PIC / Officer Preventive Maintenance).
-//
-// PENTING: file ini HANYA mengubah tampilan/layout HTML->PDF. Logika data
-// (field apa yang dipakai) tidak diubah.
+// template laporan printer
+
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
 const { escapeHtml } = require('./templateHelpers');
 
@@ -376,7 +370,7 @@ function buildPrinterChecklistHtml(checklist) {
       <div style="border-top: 1px solid #D1D5DB; margin-top: 8px; padding-top: 10px; min-height: 20px;">${technician_notes || ''}</div>
     </div>
 
-    <!-- SIGNATURES FOOTER (3 kolom: Person In Charge SIG / PIC / Officer PM) -->
+    <!-- SIGNATURES FOOTER -->
     <div class="signature-wrapper">
       <table class="signature-table">
         <tr>

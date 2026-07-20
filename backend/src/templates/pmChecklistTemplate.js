@@ -1,6 +1,5 @@
-// Template HTML untuk PDF checklist PM, mengikuti layout form fisik
-// (Bagian 9 PRD): header, data konfigurasi, tabel terpisah untuk setiap section,
-// dan area tanda tangan yang disesuaikan.
+// template laporan PC/Laptop
+
 const { buildAttachmentsHtml, attachmentStyles } = require('./attachmentsSection');
 const { escapeHtml } = require('./templateHelpers');
 
@@ -154,23 +153,23 @@ function buildChecklistHtml(checklist) {
     border-bottom: 1px solid black;
   }
   .header-table th {
-    border: 1px solid black; /* Beri border penuh di setiap sel */
-    border-top: none; /* Agar tidak menumpuk dengan garis atas kotak utama */
+    border: 1px solid black;
+    border-top: none;
     padding: 5px;
     font-size: 11px;
     text-align: center;
   }
   .header-table th:first-child {
-    border-left: none; /* Menyatu dengan garis kiri wrapper */
+    border-left: none;
   }
   .header-table th:last-child {
-    border-right: none; /* Menyatu dengan garis kanan wrapper */
+    border-right: none;
   }
 
   .title-table {
-    width: 96%; /* Diperkecil agar jarak kanan lebih lebar (sisa 4%) */
+    width: 96%;
     border-collapse: collapse;
-    margin-top: 12px; /* Menambahkan jarak atas untuk setiap kategori */
+    margin-top: 12px;
     margin-bottom: 4px;
   }
   .title-table td {
@@ -180,19 +179,19 @@ function buildChecklistHtml(checklist) {
   }
 
   .content-table {
-    width: 96%; /* Disamakan dengan title-table */
+    width: 96%;
     border-collapse: collapse;
-    margin-bottom: 12px; /* Menambahkan jarak bawah untuk setiap kategori */
+    margin-bottom: 12px;
   }
   .empty-col {
     border: none;
   }
   .grid-cell {
     border: 1px solid black;
-    padding: 2px 4px; /* Padding dipangkas agar tabel lebih rapat/pendek */
+    padding: 2px 4px; 
     font-size: 10px;
   }
-  /* Class border-right-none sudah dihapus */
+ 
   .center {
     text-align: center;
   }
@@ -253,16 +252,13 @@ function buildChecklistHtml(checklist) {
       </colgroup>
       <tr>
         <td style="padding-top: 15px;">
-          <!-- Diubah menjadi block dan text-center agar lebarnya sejajar persis dengan titik-titik Device -->
           <div style="border: 1px solid black; display: block; text-align: center; padding: 3px 0; background-color: #E5E7EB; font-weight: bold; font-size: 10px;">
             Configurations Items
           </div>
         </td>
-        <!-- Menggunakan colspan="2" agar membentang lurus hingga ke ujung titik-titik Site -->
         <td colspan="2" style="padding-top: 15px;">
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <!-- Dibagi 50% 50% agar pembatas tengahnya jatuh tepat di antara kolom ID dan Site -->
               <td style="width: 50%; border: 1px solid black; background-color: #E5E7EB; text-align: center; font-weight: bold; padding: 3px;">Date</td>
               <td style="width: 50%; border: 1px solid black; text-align: center; padding: 3px;">${formatDate(checklist_date)}</td>
             </tr>
@@ -312,10 +308,9 @@ function buildChecklistHtml(checklist) {
     </table>
   </div>
 
-  <!-- MAIN CONTENT BOX -->
+
   <div class="main-wrapper">
     
-    <!-- HEADER -->
     <table class="header-table">
       <colgroup>
         <col style="width: 6%;">  <!-- Item -->

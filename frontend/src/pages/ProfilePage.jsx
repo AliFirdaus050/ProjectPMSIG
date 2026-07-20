@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import SignaturePad from '../components/SignaturePad';
 
-// Halaman profil: tempat user simpan tanda tangan sekali, supaya otomatis
-// kepakai lagi tiap approve checklist (SPV) atau isi Formulir PM (Teknisi/Admin),
-// tanpa perlu gambar ulang tiap kali.
 export default function ProfilePage() {
   const [signature, setSignature] = useState('');
   const [loading, setLoading] = useState(true);

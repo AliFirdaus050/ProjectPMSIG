@@ -28,7 +28,7 @@ export default function HistoryPage() {
     }
   }
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   function handleFilterSubmit(e) {
     e.preventDefault();

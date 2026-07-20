@@ -1,8 +1,3 @@
-// Migration runner sederhana:
-// - Membaca semua file .sql di folder migrations secara berurutan (nama file diawali angka)
-// - Mencatat file yang sudah dijalankan di tabel schema_migrations
-// - Menjalankan file yang belum pernah dijalankan, masing-masing dalam satu transaction
-
 /*
 runner buat migrasi semua database yang ada di tabel migration
 
@@ -68,6 +63,6 @@ async function runMigrations() {
 }
 
 runMigrations().catch((err) => {
-  console.error('Mberhenti karena error.', err);
+  console.error('berhenti karena error.', err);
   process.exit(1);
 });

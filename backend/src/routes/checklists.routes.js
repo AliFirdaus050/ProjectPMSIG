@@ -18,7 +18,7 @@ function getTemplateBuilder(assetName) {
   return builders[assetName] || null;
 }
 
-// dipakai di GET /:id doang. Lihat detail checklist boleh siapapun teknisi/admin,
+// dipakai di GET /:id doang. lihat detail checklist boleh siapapun teknisi/admin,
 // status apapun, gak peduli pemilik. SPV gak boleh lewat sini (dia cuma boleh liat PDF).
 function checkChecklistViewAccess(req, res, next) {
   if (req.user.role === 'teknisi' || req.user.role === 'admin') {
@@ -27,9 +27,9 @@ function checkChecklistViewAccess(req, res, next) {
   return res.status(403).json({ message: 'Kamu tidak punya akses untuk melihat detail checklist ini.' });
 }
 
-// dipakai di PATCH /:id dan POST /:id/generate-pdf.
-// aturan: draft -> teknisi manapun boleh. completed -> cuma technician_id yang tercatat.
-// approved -> gak ada teknisi yang boleh sama sekali. admin bebas kapan aja.
+// dipakai di PATCH /:id dan POST /:id/generate-pdf
+// jika draft maka teknisi manapun boleh, kalau completed cuma teknisi yg tercatat aja
+// jika approve, tidak bisa siapapu kecuali admin
 async function checkChecklistEditAccess(req, res, next) {
   try {
     const result = await pool.query(
@@ -57,7 +57,7 @@ async function checkChecklistEditAccess(req, res, next) {
           message: 'Checklist ini sedang menunggu approval dan hanya bisa diubah oleh teknisi yang menyelesaikannya.',
         });
       }
-      // status draft, atau status completed dan dia pemiliknya -> lolos
+      // status draft, atau status completed dan dia pemiliknya maka lolos
       req.checklistMeta = { technicianId: technician_id, status };
       return next();
     }
@@ -89,7 +89,7 @@ router.get('/template', (req, res) => {
 });
 
 // POST /api/v1/checklists
-// membuat checklist baru (status: draft)
+// membuat checklist baru (status = draft)
 router.post('/', async (req, res) => {
   const { asset_id } = req.body;
   if (!asset_id) {
@@ -184,10 +184,7 @@ router.post('/', async (req, res) => {
         [asset_id, req.user.id, hostname, periodKey, suggestedPicId, scheduledPicName]
       );
     } catch (err) {
-      // 23505 = unique_violation dari partial index pm_checklists_one_draft_per_period
-      // (migration 024) — artinya ada request lain yang menang duluan bikin draft
-      // ini di detik yang nyaris sama (mis. double-klik). Bukan error asli,
-      // cukup ambil & kembalikan draft yang udah kebuat itu.
+      // handle double click pada pm, menghindari spam request
       if (err.code === '23505') {
         const winner = await pool.query(
           `SELECT * FROM pm_checklists WHERE asset_id = $1 AND period_key = $2 AND status = 'draft'`,
@@ -525,10 +522,8 @@ const path = require('path');
 const STORAGE_ROOT = path.join(__dirname, '../../storage');
 
 // GET /api/v1/checklists/:id/pdf
-// syarat aksesnya cukup "sudah login" (router.use(authenticate) di atas) —
-// SEMUA teknisi/admin/spv boleh saling lihat PDF checklist siapa pun, gak
-// dibatasi pemilik/status. Yang ditutup di sini murni akses TANPA login sama
-// sekali (lihat juga penghapusan static /files di server.js).
+// kalau udah login siapapun boleh saling lihat pdf checklistt
+// yang gak login gabisa masuk dari link langsung
 router.get('/:id/pdf', async (req, res) => {
   const { id } = req.params;
   try {
@@ -541,14 +536,9 @@ router.get('/:id/pdf', async (req, res) => {
       return res.status(404).json({ message: 'PDF belum pernah digenerate untuk checklist ini.' });
     }
 
-    // pdf_path tersimpan dengan prefix "/files/..." (peninggalan static
-    // serving lama yang sekarang dimatikan di server.js). Di-resolve ke path
-    // asli di folder storage lalu di-stream langsung lewat koneksi yang
-    // sudah lolos authenticate di atas — bukan lewat URL statis publik lagi.
     const relativePath = pdfPath.replace(/^\/files\//, '');
     const absolutePath = path.join(STORAGE_ROOT, relativePath);
 
-    // jaga-jaga path traversal sebelum sendFile
     if (!absolutePath.startsWith(STORAGE_ROOT)) {
       return res.status(400).json({ message: 'Path PDF tidak valid.' });
     }

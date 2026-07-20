@@ -64,7 +64,7 @@ export default function ActivityLogPage() {
     api.get('/logs/actions').then(setActions).catch(() => {});
   }, []);
 
-  useEffect(() => { load(); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [page]); 
 
   function handleFilterSubmit(e) {
     e.preventDefault();
@@ -72,7 +72,7 @@ export default function ActivityLogPage() {
     load();
   }
 
-  // Kelompokkan log per tanggal, biar tampil kayak timeline (bukan tabel datar)
+  // kelompokkan log per tanggal, biar tampil kayak timeline (bukan tabel datar)
   const groupedByDate = logs.reduce((acc, log) => {
     const dateKey = new Date(log.created_at).toDateString();
     if (!acc[dateKey]) acc[dateKey] = [];

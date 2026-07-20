@@ -3,9 +3,6 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-// Daftar link nav didefinisikan sekali, dipakai ulang untuk versi desktop
-// (horizontal bar) dan mobile (menu hamburger) supaya kondisi role selalu
-// konsisten di kedua tempat tanpa duplikasi logic.
 function useNavLinks(role) {
   const links = [
     { to: '/', label: 'Home', show: true },

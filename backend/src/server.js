@@ -1,4 +1,3 @@
-// servernya
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -28,10 +27,6 @@ app.get('/api/v1/health', async (req, res) => {
   }
 });
 
-// NOTE: sebelumnya ada `app.use('/files', express.static(...))` di sini —
-// dihapus karena itu yang bikin PDF checklist bisa didownload siapa aja di
-// jaringan tanpa login. Sekarang PDF cuma bisa diakses lewat
-// GET /api/v1/checklists/:id/pdf yang wajib login (lihat checklists.routes.js).
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/assets', assetsRoutes);
 app.use('/api/v1/checklists', checklistsRoutes);

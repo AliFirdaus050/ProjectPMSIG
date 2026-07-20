@@ -1,12 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
-  darkMode: 'class', // toggle dark mode via class, sesuai kebutuhan Bagian 10 PRD
+  darkMode: 'class', // dark mode
   theme: {
     extend: {
       colors: {
-        // primary & status dipertahankan namanya (dipakai di banyak halaman lain),
-        // nilainya disesuaikan ke tema baru "Industrial SaaS" dari Stitch.
         primary: {
           DEFAULT: '#2563eb', // Cobalt tombol aksi utama, link aktif
           dark: '#1d4ed8', // hover state
@@ -16,14 +14,10 @@ export default {
           error: '#DC2626',
           warning: '#D97706',
         },
-        // Warna navy khusus top navigation bar (bukan "primary", supaya gak
-        // ketuker sama warna tombol aksi).
+        // Warna navy khusus top navigation bar
         navy: {
           DEFAULT: '#0F172A',
         },
-        // Token tambahan dari design system Stitch, dipakai pas reskin
-        // halaman satu-satu (nama persis sama biar gampang nyalin dari
-        // kode Stitch tanpa perlu translate nama kelas).
         surface: {
           DEFAULT: '#f7f9fb',
           dim: '#d8dadc',

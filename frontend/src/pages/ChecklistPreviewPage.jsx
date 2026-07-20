@@ -8,10 +8,6 @@ export default function ChecklistPreviewPage() {
   const { user } = useAuth();
   const [pdfUrl, setPdfUrl] = useState(null);
   const [error, setError] = useState('');
-
-  // Cuma teknisi/admin yang mulai PM baru dari sini. SPV/PIC habis approve/lihat
-  // PDF harusnya balik ke Tracker, bukan ke halaman mulai PM (biar gak kepencet
-  // gak sengaja jadi bikin checklist PM baru atas nama mereka).
   const canStartPm = user?.role === 'teknisi' || user?.role === 'admin';
   const backTo = canStartPm ? '/checklist-baru' : '/tracker';
   const backLabel = canStartPm ? 'Kembali ke PM' : 'Kembali ke Tracker';
@@ -26,8 +22,6 @@ export default function ChecklistPreviewPage() {
       })
       .catch((err) => setError(err.message));
 
-    // blob URL itu nyimpen memory di browser, wajib dibersihin
-    // kalau halamannya ditinggal biar gak numpuk
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };

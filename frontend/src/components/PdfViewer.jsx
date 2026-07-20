@@ -4,10 +4,6 @@ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-// Render PDF pakai PDF.js langsung ke <canvas>, bukan <iframe>.
-// Ini penting untuk HP — banyak browser mobile (terutama Chrome Android)
-// tidak punya PDF viewer bawaan yang bisa ditampilkan di dalam iframe,
-// jadi PDF-nya cuma bisa diunduh, tidak bisa di-preview langsung.
 export default function PdfViewer({ url }) {
   const containerRef = useRef(null);
   const [error, setError] = useState('');

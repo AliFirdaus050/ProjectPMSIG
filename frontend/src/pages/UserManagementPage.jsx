@@ -321,7 +321,7 @@ export default function UserManagementPage() {
             <form onSubmit={handleResetPassword} className="space-y-3">
               <input
                 type="password"
-                placeholder="Password Baru (min. 6 karakter)"
+                placeholder="Password Baru (min. 8 karakter)"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required

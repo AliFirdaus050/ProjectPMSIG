@@ -15,7 +15,6 @@ const EMPTY_FORM = {
 const inputClass =
   'border border-[#CBD5E1] dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded px-2 py-1.5 font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20';
 
-// Helper component: Truncate HANYA di desktop (md:), di HP teks akan utuh/wrap
 const TableCell = ({ value, className = '' }) => (
   <td 
     // Hapus md:truncate dan md:max-w-0 di sini
@@ -33,14 +32,11 @@ export default function AssetDatabasePage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAsset, setNewAsset] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
-
   const limit = 20;
 
   async function load() {
@@ -59,7 +55,7 @@ export default function AssetDatabasePage() {
     }
   }
 
-  useEffect(() => { load(); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [page]); 
 
   function handleSearchSubmit(e) {
     e.preventDefault();
@@ -177,13 +173,6 @@ export default function AssetDatabasePage() {
 
       {/* WRAPPER: overflow-x-auto agar HP bisa scroll, tapi di desktop tidak akan scroll jika muat */}
       <div className="bg-surface-container-lowest dark:bg-slate-800 border border-outline-variant dark:border-slate-700 rounded-lg overflow-x-auto">
-        
-        {/* TABLE: 
-            - min-w-[1000px]: Memaksa tabel lebar minimal 1000px (HP pasti scroll, teks tidak gepeng)
-            - md:min-w-0: Di desktop, batasan 1000px dihapus agar bisa pas 100% layar
-            - table-auto: Di HP, kolom menyesuaikan isi (tidak dipaksa truncate)
-            - md:table-fixed: Di desktop, kolom patuh pada persentase yang kita tentukan 
-        */}
         <table className="w-full text-left border-collapse min-w-[1000px] md:min-w-0 table-auto md:table-fixed">
           <thead>
             <tr className="border-b border-outline-variant dark:border-slate-700 bg-surface-container-low dark:bg-slate-800 text-on-surface-variant dark:text-gray-400 text-xs">

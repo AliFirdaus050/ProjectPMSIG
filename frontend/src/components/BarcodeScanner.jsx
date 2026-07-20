@@ -1,22 +1,13 @@
+// scanner ada 2. live scan dan juga ambil foto lewat kamera hp
+
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
-// Scanner QR Code/Barcode pakai kamera (utamakan kamera belakang di HP).
-// Serial Number langsung ada di dalam QR sesuai aset fisik (konfirmasi sebelumnya).
-//
-// Ada 2 mode:
-// 1. Live scan (default) — decode dari video stream real-time. Cepat, tapi
-//    resolusinya dibatasi oleh video preview (biasanya di-downscale demi
-//    frame-rate), jadi QR yang fisiknya sangat kecil bisa gagal kebaca.
-// 2. Ambil Foto (fallback) — buka kamera native HP lewat <input capture>,
-//    user bisa pinch-zoom OPTIK (bukan digital) sebelum jepret, lalu foto
-//    di-decode dari resolusi PENUH sensor kamera. Jauh lebih akurat untuk
-//    QR kecil dibanding live scan, walau langkahnya satu tap lebih banyak.
 export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
   const containerId = 'barcode-scanner-container';
-  const [zoomCaps, setZoomCaps] = useState(null); // { min, max, step } | null kalau tidak didukung
+  const [zoomCaps, setZoomCaps] = useState(null);
   const [zoomValue, setZoomValue] = useState(1);
   const [photoError, setPhotoError] = useState('');
   const [decodingPhoto, setDecodingPhoto] = useState(false);
@@ -47,7 +38,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
           if (cancelled) return;
           onScan(decodedText);
         },
-        () => {} // error callback per-frame, diabaikan (normal saat belum ketemu barcode)
+        () => {} 
       )
       .then(() => {
         if (cancelled) return;
@@ -57,7 +48,6 @@ export default function BarcodeScanner({ onScan, onClose }) {
             setZoomCaps({ min: caps.zoom.min, max: caps.zoom.max, step: caps.zoom.step || 0.1 });
             setZoomValue(caps.zoom.min);
           } else {
-            // Debug bantu cek kenapa slider tidak muncul di device tertentu.
             console.info('Kamera ini tidak expose kapabilitas zoom (normal di sebagian device/browser).');
           }
         } catch (e) {
@@ -68,10 +58,6 @@ export default function BarcodeScanner({ onScan, onClose }) {
         if (!cancelled) console.error('Gagal memulai kamera:', err);
       });
 
-    // PENTING: cleanup menunggu start() selesai (sukses/gagal) dulu sebelum stop().
-    // Ini mencegah race condition React StrictMode (dev mode menjalankan effect 2x)
-    // yang sebelumnya bikin 2 stream kamera nyala bersamaan (dobel tampilan + lag).
-    // Tidak berdampak ke production build (StrictMode double-invoke cuma di dev).
     return () => {
       cancelled = true;
       startPromise.finally(async () => {
@@ -80,10 +66,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
             await scanner.stop();
           }
         } catch (e) {
-          // Aman diabaikan.
         }
-        // Bersihkan manual sisa elemen <video>/<canvas> di container, jaga-jaga
-        // supaya instance berikutnya (remount) tidak numpuk di DOM yang sama.
         const el = document.getElementById(containerId);
         if (el) el.innerHTML = '';
       });
@@ -102,19 +85,15 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
   const handlePhotoPicked = async (e) => {
     const file = e.target.files?.[0];
-    e.target.value = ''; // reset supaya bisa pilih file yang sama lagi kalau perlu retry
+    e.target.value = ''; 
     if (!file) return;
 
     setPhotoError('');
     setDecodingPhoto(true);
     try {
-      // Hentikan live scan dulu supaya tidak rebutan kamera dengan proses decode foto.
       if (scannerRef.current?.isScanning) {
         await scannerRef.current.stop();
       }
-      // scanFile mendecode dari resolusi PENUH file gambar (bukan video preview
-      // yang di-downscale), jadi jauh lebih kuat untuk QR yang fisiknya kecil —
-      // apalagi kalau usernya pinch-zoom optik dulu sebelum jepret.
       const decodedText = await scannerRef.current.scanFile(file, false);
       onScan(decodedText);
     } catch (err) {
