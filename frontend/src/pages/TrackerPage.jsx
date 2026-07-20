@@ -165,12 +165,20 @@ export default function TrackerPage() {
                         {approvingId === row.checklist_id ? 'Memproses...' : 'Approve'}
                       </button>
                     )}
-                    {row.checklist_id && (
+                    {row.checklist_id && row.status === 'draft' && (user?.role === 'teknisi' || user?.role === 'admin') && (
                       <Link
-                        to={row.status === 'draft' ? `/checklist/${row.checklist_id}` : `/checklist/${row.checklist_id}/preview`}
+                        to={`/checklist/${row.checklist_id}`}
                         className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-200 h-7 px-3 rounded-sm font-body-sm text-body-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center"
                       >
-                        {row.status === 'draft' ? 'Lanjutkan' : 'Lihat PDF'}
+                        Lanjutkan
+                      </Link>
+                    )}
+                    {row.checklist_id && row.status !== 'draft' && (
+                      <Link
+                        to={`/checklist/${row.checklist_id}/preview`}
+                        className="bg-surface dark:bg-slate-700 border border-[#CBD5E1] dark:border-slate-600 text-on-surface dark:text-gray-200 h-7 px-3 rounded-sm font-body-sm text-body-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center"
+                      >
+                        Lihat PDF
                       </Link>
                     )}
                   </div>
