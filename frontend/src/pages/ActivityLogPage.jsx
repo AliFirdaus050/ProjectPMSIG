@@ -84,7 +84,7 @@ export default function ActivityLogPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-comfortable md:py-8">
-      <h1 className="font-headline-lg text-headline-lg text-on-surface dark:text-gray-100 mb-1">Log Aktifitas</h1>
+      <h1 className="font-headline-lg text-headline-lg text-on-surface dark:text-gray-100 mb-1">Log Aktivitas</h1>
       <p className="font-body-md text-body-md text-on-surface-variant dark:text-gray-400 mb-6">
         Jejak audit seluruh aktivitas penting di sistem.
       </p>
