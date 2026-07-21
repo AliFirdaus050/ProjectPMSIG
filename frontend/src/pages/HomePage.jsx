@@ -9,13 +9,13 @@ const ROLE_LABELS = {
 };
 
 const ALL_MENUS = [
-  { path: '/checklist-baru', label: 'Checklist Baru', description: 'Cari serial number & isi checklist PM', roles: ['teknisi'], icon: 'checklist', badge: 'ACTION', badgeClass: 'bg-blue-100 text-blue-700' },
+  { path: '/checklist-baru', label: 'Checklist Baru', description: 'Cari serial number & isi checklist PM', roles: ['teknisi'], icon: 'checklist' },
   { path: '/upload-jadwal', label: 'Upload Jadwal', description: 'Unggah jadwal PM periode berikutnya', roles: ['teknisi'], icon: 'calendar_month' },
-  { path: '/tracker', label: 'Tracker PM', description: 'Pantau status PM periode berjalan', roles: ['teknisi', 'spv', 'pic'], icon: 'monitoring', badge: 'LIVE', badgeClass: 'bg-green-100 text-green-700' },
+  { path: '/tracker', label: 'Tracker PM', description: 'Pantau status PM periode berjalan', roles: ['teknisi', 'spv', 'pic'], icon: 'monitoring' },
   { path: '/history', label: 'Riwayat', description: 'Riwayat checklist yang pernah dibuat', roles: ['teknisi'], icon: 'history' },
   { path: '/devices', label: 'Edit Database Device', description: 'Kelola data master device', roles: ['teknisi', 'spv', 'admin'], icon: 'database' },
-  { path: '/users', label: 'Kelola User', description: 'Kelola akun & role pengguna sistem', roles: ['admin', 'spv'], icon: 'group', badge: 'ADMIN', badgeClass: 'bg-purple-100 text-purple-700' },
-  { path: '/logs', label: 'Log Aktivitas', description: 'Jejak audit seluruh aktivitas sistem', roles: ['admin'], icon: 'history_edu', badge: 'ADMIN', badgeClass: 'bg-purple-100 text-purple-700' },
+  { path: '/users', label: 'Kelola User', description: 'Kelola akun & role pengguna sistem', roles: ['admin', 'spv'], icon: 'group'},
+  { path: '/logs', label: 'Log Activity', description: 'Jejak audit seluruh aktivitas sistem', roles: ['admin'], icon: 'history_edu'},
 ];
 
 export default function HomePage() {

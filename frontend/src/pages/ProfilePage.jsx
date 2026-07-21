@@ -51,7 +51,7 @@ export default function ProfilePage() {
     <div className="max-w-lg mx-auto py-8 px-4">
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Profil Saya</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        Tanda tangan ini akan otomatis dipakai lagi tiap kamu isi checklist PM
+        Tanda tangan ini akan otomatis dipakai lagi tiap isi checklist PM
         atau approve checklist (khusus SPV) tinggal klik, tidak perlu gambar ulang.
       </p>
 
