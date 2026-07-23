@@ -163,7 +163,7 @@ router.post('/:id/reset-password', async (req, res) => {
 });
 
 // DELETE /api/v1/users/:id
-router.delete('/:id', authorize('admin'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
   // gak boleh hapus akun sendiri, bisa2 admin gak sengaja ngunci diri sendiri dari sistem
