@@ -222,8 +222,8 @@ export default function UserManagementPage() {
         </form>
       )}
 
-      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden mb-6">
-        <table className="w-full text-sm">
+      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-x-auto mb-6">
+        <table className="w-full text-sm min-w-[640px] md:min-w-0">
           <thead className="bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
             <tr>
               <th className="text-left p-3">Nama</th>
